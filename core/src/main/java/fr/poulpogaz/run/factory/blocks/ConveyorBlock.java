@@ -3,6 +3,7 @@ package fr.poulpogaz.run.factory.blocks;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import fr.poulpogaz.run.Rotation;
 import fr.poulpogaz.run.Utils;
+import fr.poulpogaz.run.factory.ConveyorManager;
 import fr.poulpogaz.run.factory.Tile;
 
 import static fr.poulpogaz.run.Variables.*;
@@ -48,7 +49,7 @@ public class ConveyorBlock extends Block {
         boolean behind = canConnect(tile, data.rotation.opposite());
         boolean right = canConnect(tile, data.rotation.rotateCW());
 
-        int frame = (factory.getTick() / 8) % 8;
+        int frame = (int) ((factory.getTick() * speed() / 2)) % 8;
 
         TextureRegion[] textures;
         if (left && !behind && !right) {
@@ -64,6 +65,10 @@ public class ConveyorBlock extends Block {
 
     private boolean canConnect(Tile tile, Rotation vec) {
         Tile side = tile.adjacent(vec);
+        if (side == null) {
+            return false;
+        }
+
         BlockData b = side.getBlockData();
 
         if (b == null) {
@@ -79,8 +84,21 @@ public class ConveyorBlock extends Block {
     }
 
     @Override
+    public void onBlockBuild(Tile tile) {
+        ConveyorManager.newConveyor(tile);
+    }
+
+    @Override
     public BlockData createData() {
         return new Data();
+    }
+
+
+    /**
+     * speed of 1: items move by 1 pixel every tick
+     */
+    public float speed() {
+        return 2f;
     }
 
     @Override
@@ -95,6 +113,7 @@ public class ConveyorBlock extends Block {
 
     public static class Data extends BlockData {
 
-
+        public ConveyorManager.ConveyorSection section;
+        public Tile previousTile; // null if not in the same section
     }
 }

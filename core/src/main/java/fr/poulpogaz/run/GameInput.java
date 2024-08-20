@@ -17,6 +17,9 @@ public class GameInput extends BasicInputProcessor {
     public Block selectedBlock;
     public Rotation selectedBlockRotation = Rotation.DEGREES_0;
 
+    public boolean pause = false;
+    public int simulateTicks = 0;
+
     public GameInput() {
 
     }
@@ -39,9 +42,17 @@ public class GameInput extends BasicInputProcessor {
                 selectedBlockRotation = selectedBlockRotation.rotateCW();
             }
 
-            if (isKeyJustPressed(Input.Keys.A)) {
+            if (isKeyJustPressed(Input.Keys.Q)) {
                 select(null);
             }
+        }
+
+        if (isKeyJustPressed(Input.Keys.SPACE)) {
+            pause = !pause;
+        }
+
+        if (isKeyJustPressed(Input.Keys.LEFT)) {
+            simulateTicks = 1;
         }
     }
 

@@ -40,6 +40,18 @@ public abstract class Block extends Content {
 
     }
 
+    public void onBlockBuild(Tile tile) {
+
+    }
+
+    public void onBlockRotated(Tile tile, Rotation oldRotation) {
+
+    }
+
+    public void onBlockDestroyed(Tile tile) {
+
+    }
+
     public BlockData createData() {
         return null;
     }

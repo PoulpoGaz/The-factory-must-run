@@ -2,13 +2,13 @@ package fr.poulpogaz.run.factory.item;
 
 public class Items {
 
-    public static Item ironPlate;
-    public static Item gear;
-    public static Item pipe;
+    public static Item IRON_PLATE;
+    public static Item GEAR;
+    public static Item PIPE;
 
     public static void load() {
-        ironPlate = new Item("iron_plate");
-        gear = new Item("gear");
-        pipe = new Item("pip");
+        IRON_PLATE = new Item("iron_plate");
+        GEAR = new Item("gear");
+        PIPE = new Item("pip");
     }
 }

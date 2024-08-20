@@ -90,6 +90,10 @@ public class BasicInputProcessor implements InputProcessor {
         return true;
     }
 
+    public boolean isMouseJustPressed(int mouse) {
+        return buttonPressed[mouse] == 1;
+    }
+
     public boolean isMousePressed(int mouse) {
         return buttonPressed[mouse] > 0;
     }
@@ -118,6 +122,12 @@ public class BasicInputProcessor implements InputProcessor {
         scroll = 0;
         dragged = false;
         Arrays.fill(buttonReleased, false);
+
+        for (int i = 0; i < buttonPressed.length; i++) {
+            if (buttonPressed[i] > 0) {
+                buttonPressed[i] = 2; // 1 if just pressed
+            }
+        }
 
         for (IntIntMap.Entry entry : keys.entries()) {
             keys.put(entry.key, entry.value + 1);

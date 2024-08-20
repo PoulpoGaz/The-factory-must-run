@@ -1,5 +1,7 @@
 package fr.poulpogaz.run;
 
+import com.badlogic.gdx.math.Vector2;
+
 public enum Rotation {
 
     DEGREES_0(0, 1, 0),
@@ -25,6 +27,8 @@ public enum Rotation {
         DEGREES_270.opposite = DEGREES_90;
     }
 
+    public static final Rotation[] values = Rotation.values();
+
     public final float angle;
     public final int dx;
     public final int dy;
@@ -49,6 +53,13 @@ public enum Rotation {
 
     public Rotation opposite() {
         return opposite;
+    }
+
+    public void rotate(Vector2 v) {
+        v.set(
+            v.x * dx - v.y * dy,
+            v.x * dy + v.y * dx
+        );
     }
 
     public static Rotation displacementToRotation(int dx, int dy) {

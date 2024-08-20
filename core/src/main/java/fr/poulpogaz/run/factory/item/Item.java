@@ -19,6 +19,10 @@ public class Item extends Content {
         icon = atlas.findRegion(name);
     }
 
+    public TextureRegion getIcon() {
+        return icon;
+    }
+
     @Override
     public ContentType getContentType() {
         return ContentType.ITEM;

@@ -15,7 +15,6 @@ public class Factory {
     public int width;
     public int height;
 
-    public Array<Block> blocks = new Array<>();
 
     public int tick = 0;
 
@@ -44,6 +43,16 @@ public class Factory {
 
     public void tick() {
         tick++;
+
+        for (int i = 0; i < tiles.length; i++) {
+            Tile tile = tiles[i];
+
+            if (tile.getBlock() != null) {
+                tile.getBlock().tick(tile.getBlockData());
+            }
+        }
+
+        ConveyorManager.tick();
     }
 
     public void setBlock(int x, int y, Block selectedBlock, Rotation rotation) {

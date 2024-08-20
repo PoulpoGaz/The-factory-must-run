@@ -10,6 +10,7 @@ import fr.poulpogaz.run.factory.Factory;
 public class Variables {
 
     public static final int TILE_SIZE = 32;
+    public static final int HALF_TILE_SIZE = TILE_SIZE / 2;
 
     public static final AssetManager assetManager = new AssetManager();
     public static ShapeRenderer shape;

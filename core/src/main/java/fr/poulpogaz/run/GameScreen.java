@@ -11,6 +11,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import fr.poulpogaz.run.factory.ConveyorManager;
 import fr.poulpogaz.run.factory.Factory;
 import fr.poulpogaz.run.factory.Floor;
 import fr.poulpogaz.run.factory.Tile;
@@ -57,11 +58,21 @@ public class GameScreen implements Screen {
             }
         });
 
+        Button generator = new Button(new Image(atlas.findRegion("generator")), skin);
+        generator.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                input.select(Blocks.GENERATOR);
+            }
+        });
+
+
         rootTable.bottom();
         rootTable.add(conveyor).padLeft(10).padRight(10);
         rootTable.add(router).padLeft(10).padRight(10);
         rootTable.add(undergroundConveyor).padLeft(10).padRight(10);
         rootTable.add(wall).padLeft(10).padRight(10);
+        rootTable.add(generator).padLeft(10).padRight(10);
 
         stage.addActor(rootTable);
     }
@@ -80,13 +91,24 @@ public class GameScreen implements Screen {
         update(delta);
         ScreenUtils.clear(0, 0, 0, 1);
         renderFactory();
+
+        if (input.pause) {
+            setupBatches(stage.getViewport().getCamera().combined, ID);
+            batch.begin();
+            font.draw(batch, "Paused", 0, Gdx.graphics.getHeight());
+            batch.end();
+        }
         stage.draw();
     }
 
 
     private void update(float delta) {
         input.update();
-        factory.tick();
+        if (!input.pause || input.simulateTicks > 0) {
+            factory.tick();
+
+            input.simulateTicks = Math.max(input.simulateTicks - 1, 0);
+        }
         stage.act(Math.min(delta, 1 / 60f));
         input.clean();
     }
@@ -96,20 +118,9 @@ public class GameScreen implements Screen {
 
         batch.begin();
 
-        // render the factory
-        for (int y = 0; y < factory.height; y++) {
-            for (int x = 0; x < factory.width; x++) {
-                Tile tile = factory.getTile(x, y);
-
-                Floor floor = tile.getFloor();
-                drawFloor(floor, x, y);
-
-                Block block = tile.getBlock();
-                if (block != null) {
-                    block.draw(tile);
-                }
-            }
-        }
+        drawFactory();
+        ConveyorManager.drawItems();
+        ConveyorManager.drawConveyorSections();
 
         // draw build plan
         if (input.selectedBlock != null) {
@@ -121,10 +132,22 @@ public class GameScreen implements Screen {
         batch.end();
     }
 
-    private void drawFloor(Floor floor, float x, float y) {
-        TextureRegion region = floor.getRegion();
 
-        batch.draw(region, x * TILE_SIZE, y * TILE_SIZE);
+    private void drawFactory() {
+        for (int y = 0; y < factory.height; y++) {
+            for (int x = 0; x < factory.width; x++) {
+                Tile tile = factory.getTile(x, y);
+
+                Floor floor = tile.getFloor();
+                TextureRegion region = floor.getRegion();
+                batch.draw(region, x * TILE_SIZE, y * TILE_SIZE);
+
+                Block block = tile.getBlock();
+                if (block != null) {
+                    block.draw(tile);
+                }
+            }
+        }
     }
 
     private void setupBatches(Matrix4 proj, Matrix4 transform) {

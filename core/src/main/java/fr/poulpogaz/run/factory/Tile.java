@@ -31,12 +31,37 @@ public class Tile {
     }
 
     public void setBlock(Block block, Rotation rotation) {
-        this.block = block;
-        data = block.createData();
+        if (block == null) {
+            if (this.block != null) {
+                // remove
+                this.block.onBlockDestroyed(this);
+                data.tile = null;
+                data = null;
+                this.block = null;
+            }
+        } else if (this.block == block) {
+            // replace
+            if (data == null) {
+                return;
+            }
+            if (data.rotation == rotation) {
+                return; // do not replace if same block with same rotation
+            }
 
-        if (data != null) {
-            data.tile = this;
+            Rotation old = this.data.rotation;;
             data.rotation = rotation;
+            block.onBlockRotated(this, old);
+        } else {
+            // build
+            this.block = block;
+            data = block.createData();
+
+            if (data != null) {
+                data.tile = this;
+                data.rotation = rotation;
+            }
+
+            block.onBlockBuild(this);
         }
     }
 
