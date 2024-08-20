@@ -1,0 +1,119 @@
+buildscript {
+  repositories {
+    mavenCentral()
+    maven { url 'https://s01.oss.sonatype.org' }
+    gradlePluginPortal()
+    mavenLocal()
+    google()
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
+    maven { url 'https://s01.oss.sonatype.org/content/repositories/snapshots/' }
+  }
+  dependencies {
+    classpath "org.docstr:gwt-gradle-plugin:$gwtPluginVersion"
+    classpath "com.badlogicgames.gdx:gdx-tools:$gdxVersion"
+  }
+}
+
+allprojects {
+  apply plugin: 'eclipse'
+  apply plugin: 'idea'
+
+  // This allows you to "Build and run using IntelliJ IDEA", an option in IDEA's Settings.
+  idea {
+    module {
+      outputDir file('build/classes/java/main')
+      testOutputDir file('build/classes/java/test')
+    }
+  }
+}
+
+configure(subprojects) {
+  apply plugin: 'java-library'
+  sourceCompatibility = 11
+  compileJava {
+    options.incremental = true
+  }
+  // From https://lyze.dev/2021/04/29/libGDX-Internal-Assets-List/
+  // The article can be helpful when using assets.txt in your project.
+  compileJava.doLast {
+    // projectFolder/assets
+    def assetsFolder = new File("${project.rootDir}/assets/")
+    // projectFolder/assets/assets.txt
+    def assetsFile = new File(assetsFolder, "assets.txt")
+    // delete that file in case we've already created it
+    assetsFile.delete()
+
+    // iterate through all files inside that folder
+    // convert it to a relative path
+    // and append it to the file assets.txt
+    fileTree(assetsFolder).collect { assetsFolder.relativePath(it) }.each {
+      assetsFile.append(it + "\n")
+    }
+  }
+}
+
+subprojects {
+  version = '$projectVersion'
+  ext.appName = 'Run'
+  repositories {
+    mavenCentral()
+    maven { url 'https://s01.oss.sonatype.org' }
+    // You may want to remove the following line if you have errors downloading dependencies.
+    mavenLocal()
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
+    maven { url 'https://s01.oss.sonatype.org/content/repositories/snapshots/' }
+    maven { url 'https://jitpack.io' }
+  }
+}
+
+eclipse.project.name = 'Run' + '-parent'
+
+
+// Store the parameters you want to pass the texturePacker here...
+
+// Import the texture packer
+import com.badlogic.gdx.tools.texturepacker.TexturePacker
+
+import java.nio.file.Files
+import java.util.regex.Matcher
+import java.util.regex.Pattern
+import java.util.stream.Stream
+
+// Add a new task that packs the textures for you
+tasks.register('texturePacker') {
+  doLast {
+    logger.info "Calling TexturePacker: " + texturePacker
+
+    Pattern indexPattern = Pattern.compile('(.+[^_])(\\d+)\\.png$');
+
+    try (Stream<java.nio.file.Path> stream = Files.walk(java.nio.file.Path.of("assets_ase/"))) {
+      Iterator<java.nio.file.Path> iterator = stream.iterator();
+
+      while (iterator.hasNext()) {
+        java.nio.file.Path next = iterator.next();
+
+        if (!Files.isDirectory(next)) {
+          Matcher matcher = indexPattern.matcher(next.getFileName().toString());
+
+          if (matcher.matches()) {
+            String name = matcher.group(1);
+            String index = matcher.group(2);
+
+            java.nio.file.Path to = next.resolveSibling(name + "_" + index + ".png");
+
+            logger.info("Moving " + next + " to " + to)
+            if (Files.exists(to)) {
+              Files.delete(to);
+            }
+            Files.move(next, to);
+          }
+        }
+      }
+
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    TexturePacker.process("assets_ase/textures/map", "assets/textures/map", "map")
+  }
+}

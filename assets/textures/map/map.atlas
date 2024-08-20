@@ -1,0 +1,517 @@
+
+map.png
+size: 1024, 128
+format: RGBA8888
+filter: Nearest, Nearest
+repeat: none
+conveyor
+  rotate: false
+  xy: 2, 88
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 1
+conveyor
+  rotate: false
+  xy: 2, 54
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 2
+conveyor
+  rotate: false
+  xy: 36, 88
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 3
+conveyor
+  rotate: false
+  xy: 2, 20
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 4
+conveyor
+  rotate: false
+  xy: 36, 54
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 5
+conveyor
+  rotate: false
+  xy: 70, 88
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 6
+conveyor
+  rotate: false
+  xy: 36, 20
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 7
+conveyor
+  rotate: false
+  xy: 70, 54
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 8
+conveyor_turn
+  rotate: false
+  xy: 104, 88
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 1
+conveyor_turn
+  rotate: false
+  xy: 70, 20
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 2
+conveyor_turn
+  rotate: false
+  xy: 104, 54
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 3
+conveyor_turn
+  rotate: false
+  xy: 138, 88
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 4
+conveyor_turn
+  rotate: false
+  xy: 104, 20
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 5
+conveyor_turn
+  rotate: false
+  xy: 138, 54
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 6
+conveyor_turn
+  rotate: false
+  xy: 172, 88
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 7
+conveyor_turn
+  rotate: false
+  xy: 138, 20
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 8
+gear
+  rotate: false
+  xy: 682, 40
+  size: 12, 12
+  orig: 12, 12
+  offset: 0, 0
+  index: -1
+ground
+  rotate: false
+  xy: 172, 54
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+iron_plate
+  rotate: false
+  xy: 2, 2
+  size: 16, 16
+  orig: 16, 16
+  offset: 0, 0
+  index: -1
+machine
+  rotate: false
+  xy: 206, 88
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+pipe
+  rotate: false
+  xy: 716, 104
+  size: 16, 16
+  orig: 16, 16
+  offset: 0, 0
+  index: -1
+router
+  rotate: false
+  xy: 172, 20
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 1
+router
+  rotate: false
+  xy: 206, 54
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 2
+router
+  rotate: false
+  xy: 240, 88
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 3
+router
+  rotate: false
+  xy: 206, 20
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 4
+router
+  rotate: false
+  xy: 240, 54
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 5
+router
+  rotate: false
+  xy: 274, 88
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 6
+router
+  rotate: false
+  xy: 240, 20
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 7
+router
+  rotate: false
+  xy: 274, 54
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 8
+underground_conveyor_input
+  rotate: false
+  xy: 308, 88
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 1
+underground_conveyor_input
+  rotate: false
+  xy: 274, 20
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 2
+underground_conveyor_input
+  rotate: false
+  xy: 308, 54
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 3
+underground_conveyor_input
+  rotate: false
+  xy: 342, 88
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 4
+underground_conveyor_input
+  rotate: false
+  xy: 308, 20
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 5
+underground_conveyor_input
+  rotate: false
+  xy: 342, 54
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 6
+underground_conveyor_input
+  rotate: false
+  xy: 376, 88
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 7
+underground_conveyor_input
+  rotate: false
+  xy: 342, 20
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 8
+underground_conveyor_input_mask
+  rotate: false
+  xy: 376, 54
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 1
+underground_conveyor_output_mask
+  rotate: false
+  xy: 376, 54
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 8
+underground_conveyor_input_mask
+  rotate: false
+  xy: 410, 88
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 2
+underground_conveyor_output_mask
+  rotate: false
+  xy: 410, 88
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 7
+underground_conveyor_input_mask
+  rotate: false
+  xy: 376, 20
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 3
+underground_conveyor_output_mask
+  rotate: false
+  xy: 376, 20
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 6
+underground_conveyor_input_mask
+  rotate: false
+  xy: 410, 54
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 4
+underground_conveyor_output_mask
+  rotate: false
+  xy: 410, 54
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 5
+underground_conveyor_input_mask
+  rotate: false
+  xy: 444, 88
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 5
+underground_conveyor_output_mask
+  rotate: false
+  xy: 444, 88
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 4
+underground_conveyor_input_mask
+  rotate: false
+  xy: 410, 20
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 6
+underground_conveyor_output_mask
+  rotate: false
+  xy: 410, 20
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 3
+underground_conveyor_input_mask
+  rotate: false
+  xy: 444, 54
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 7
+underground_conveyor_output_mask
+  rotate: false
+  xy: 444, 54
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 2
+underground_conveyor_input_mask
+  rotate: false
+  xy: 478, 88
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 8
+underground_conveyor_output_mask
+  rotate: false
+  xy: 478, 88
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 1
+underground_conveyor_output
+  rotate: false
+  xy: 444, 20
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 1
+underground_conveyor_output
+  rotate: false
+  xy: 478, 54
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 2
+underground_conveyor_output
+  rotate: false
+  xy: 512, 88
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 3
+underground_conveyor_output
+  rotate: false
+  xy: 478, 20
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 4
+underground_conveyor_output
+  rotate: false
+  xy: 512, 54
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 5
+underground_conveyor_output
+  rotate: false
+  xy: 546, 88
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 6
+underground_conveyor_output
+  rotate: false
+  xy: 512, 20
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 7
+underground_conveyor_output
+  rotate: false
+  xy: 546, 54
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 8
+wall
+  rotate: false
+  xy: 580, 88
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+wall_down
+  rotate: false
+  xy: 546, 20
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+wall_left_right
+  rotate: false
+  xy: 580, 54
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+wall_right
+  rotate: false
+  xy: 614, 88
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+wall_t_down
+  rotate: false
+  xy: 580, 20
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+wall_t_right
+  rotate: false
+  xy: 614, 54
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+wall_t_up
+  rotate: false
+  xy: 648, 88
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+wall_turn_right
+  rotate: false
+  xy: 614, 20
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+wall_turn_up
+  rotate: false
+  xy: 648, 54
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+wall_up
+  rotate: false
+  xy: 682, 88
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+wall_up_down
+  rotate: false
+  xy: 648, 20
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+wall_x
+  rotate: false
+  xy: 682, 54
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
