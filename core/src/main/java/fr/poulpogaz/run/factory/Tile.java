@@ -1,6 +1,6 @@
 package fr.poulpogaz.run.factory;
 
-import fr.poulpogaz.run.Rotation;
+import fr.poulpogaz.run.Direction;
 import fr.poulpogaz.run.factory.blocks.Block;
 import fr.poulpogaz.run.factory.blocks.BlockData;
 
@@ -22,15 +22,15 @@ public class Tile {
     }
 
 
-    public Tile adjacent(Rotation rotation) {
-        return adjacent(rotation.dx, rotation.dy);
+    public Tile adjacent(Direction direction) {
+        return adjacent(direction.dx, direction.dy);
     }
 
     public Tile adjacent(int dx, int dy) {
         return factory.getTile(x + dx, y + dy);
     }
 
-    public void setBlock(Block block, Rotation rotation) {
+    public void setBlock(Block block, Direction direction) {
         if (block == null) {
             if (this.block != null) {
                 // remove
@@ -40,17 +40,27 @@ public class Tile {
                 this.block = null;
             }
         } else if (this.block == block) {
-            // replace
+            // rotate
             if (data == null) {
                 return;
             }
-            if (data.rotation == rotation) {
+            if (data.direction == direction) {
                 return; // do not replace if same block with same rotation
             }
 
-            Rotation old = this.data.rotation;;
-            data.rotation = rotation;
-            block.onBlockRotated(this, old);
+            block.onBlockRotated(this, direction);
+            data.direction = direction;
+        } else if (this.block != null) {
+            // replace
+            BlockData newData = block.createData();
+            if (newData != null) {
+                newData.tile = this;
+                newData.direction = direction;
+            }
+
+            block.onBlockReplaced(this, block, newData);
+            this.block = block;
+            data = newData;
         } else {
             // build
             this.block = block;
@@ -58,7 +68,7 @@ public class Tile {
 
             if (data != null) {
                 data.tile = this;
-                data.rotation = rotation;
+                data.direction = direction;
             }
 
             block.onBlockBuild(this);

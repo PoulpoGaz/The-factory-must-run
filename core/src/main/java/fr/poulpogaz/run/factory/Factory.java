@@ -1,13 +1,9 @@
 package fr.poulpogaz.run.factory;
 
-import com.badlogic.gdx.utils.Array;
-import fr.poulpogaz.run.Rotation;
+import fr.poulpogaz.run.Direction;
 import fr.poulpogaz.run.factory.blocks.Block;
 import fr.poulpogaz.run.factory.blocks.BlockData;
 import fr.poulpogaz.run.factory.blocks.Blocks;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class Factory {
 
@@ -33,7 +29,7 @@ public class Factory {
                 tiles[i] = new Tile(x, y);
 
                 if (y == 0 || y == height - 1 || x == 0 || x == width - 1) {
-                    tiles[i].setBlock(Blocks.WALL, Rotation.DEGREES_0);
+                    tiles[i].setBlock(Blocks.WALL, Direction.LEFT);
                 }
 
                 i++;
@@ -55,8 +51,8 @@ public class Factory {
         ConveyorManager.tick();
     }
 
-    public void setBlock(int x, int y, Block selectedBlock, Rotation rotation) {
-        getTile(x, y).setBlock(selectedBlock, rotation);
+    public void setBlock(int x, int y, Block selectedBlock, Direction direction) {
+        getTile(x, y).setBlock(selectedBlock, direction);
     }
 
     public Tile getTile(int x, int y) {

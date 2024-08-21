@@ -1,6 +1,6 @@
 package fr.poulpogaz.run.factory.blocks;
 
-import fr.poulpogaz.run.Rotation;
+import fr.poulpogaz.run.Direction;
 import fr.poulpogaz.run.factory.Tile;
 import fr.poulpogaz.run.factory.item.Items;
 
@@ -17,18 +17,17 @@ public class GeneratorBlock extends Block {
         if (factory.tick % 30 == 0) {
             Tile tile = data.tile;
 
-            for (Rotation rotation : Rotation.values) {
-                generateItem(tile.adjacent(rotation), rotation);
+            for (Direction direction : Direction.values) {
+                generateItem(tile.adjacent(direction), direction);
             }
         }
     }
 
-    private void generateItem(Tile adjacent, Rotation rot) {
+    private void generateItem(Tile adjacent, Direction rot) {
         if (adjacent.getBlock() instanceof ConveyorBlock) {
             ConveyorBlock.Data data = (ConveyorBlock.Data) adjacent.getBlockData();
 
-            if (data.rotation == rot) {
-                System.out.println("Generating item to " + rot);
+            if (data.direction == rot) {
                 data.section.passItem(Items.IRON_PLATE);
             }
         }

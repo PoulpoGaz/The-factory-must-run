@@ -3,7 +3,7 @@ package fr.poulpogaz.run.factory.blocks;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import fr.poulpogaz.run.Content;
 import fr.poulpogaz.run.ContentType;
-import fr.poulpogaz.run.Rotation;
+import fr.poulpogaz.run.Direction;
 import fr.poulpogaz.run.Utils;
 import fr.poulpogaz.run.factory.Tile;
 
@@ -25,10 +25,10 @@ public abstract class Block extends Content {
         region = atlas.findRegion(name);
     }
 
-    public void drawBuildPlan(float x, float y, Rotation rotation) {
+    public void drawBuildPlan(float x, float y, Direction direction) {
         float color = batch.getPackedColor();
         batch.setColor(1, 1, 1, 0.5f);
-        Utils.draw(region, x, y, canBeRotated ? rotation.angle : 0);
+        Utils.draw(region, x, y, canBeRotated ? direction.angle : 0);
         batch.setPackedColor(color);
     }
 
@@ -44,7 +44,11 @@ public abstract class Block extends Content {
 
     }
 
-    public void onBlockRotated(Tile tile, Rotation oldRotation) {
+    public void onBlockRotated(Tile tile, Direction newDirection) {
+
+    }
+
+    public void onBlockReplaced(Tile tile, Block newBlock, BlockData newBlockData) {
 
     }
 

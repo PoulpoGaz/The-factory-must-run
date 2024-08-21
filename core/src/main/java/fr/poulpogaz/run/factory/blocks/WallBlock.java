@@ -1,7 +1,6 @@
 package fr.poulpogaz.run.factory.blocks;
 
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import fr.poulpogaz.run.Rotation;
 import fr.poulpogaz.run.factory.Tile;
 
 import static fr.poulpogaz.run.Utils.flip;

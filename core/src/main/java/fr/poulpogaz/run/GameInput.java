@@ -15,7 +15,7 @@ public class GameInput extends BasicInputProcessor {
     public int tileY;
 
     public Block selectedBlock;
-    public Rotation selectedBlockRotation = Rotation.DEGREES_0;
+    public Direction selectedBlockDirection = Direction.LEFT;
 
     public boolean pause = false;
     public int simulateTicks = 0;
@@ -35,11 +35,11 @@ public class GameInput extends BasicInputProcessor {
 
         if (selectedBlock != null) {
             if (factory.isInFactory(tileX, tileY) && isMousePressed(Input.Buttons.LEFT)) {
-                factory.setBlock(tileX, tileY, selectedBlock, selectedBlockRotation);
+                factory.setBlock(tileX, tileY, selectedBlock, selectedBlockDirection);
             }
 
             if (selectedBlock.canBeRotated() && isKeyJustPressed(Input.Keys.R)) {
-                selectedBlockRotation = selectedBlockRotation.rotateCW();
+                selectedBlockDirection = selectedBlockDirection.rotateCW();
             }
 
             if (isKeyJustPressed(Input.Keys.Q)) {
@@ -60,7 +60,7 @@ public class GameInput extends BasicInputProcessor {
         selectedBlock = block;
 
         if (block != null && !block.canBeRotated()) {
-            selectedBlockRotation = Rotation.DEGREES_0;
+            selectedBlockDirection = Direction.LEFT;
         }
     }
 

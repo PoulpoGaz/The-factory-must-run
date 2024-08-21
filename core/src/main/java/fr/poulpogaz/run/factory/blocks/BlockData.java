@@ -1,6 +1,6 @@
 package fr.poulpogaz.run.factory.blocks;
 
-import fr.poulpogaz.run.Rotation;
+import fr.poulpogaz.run.Direction;
 import fr.poulpogaz.run.factory.Tile;
 
 public class BlockData {
@@ -9,7 +9,7 @@ public class BlockData {
     // if multi block -> top left tile
     public Tile tile;
 
-    public Rotation rotation = Rotation.DEGREES_0;
+    public Direction direction = Direction.LEFT;
 
     public int drawX() {
         return tile.drawX();

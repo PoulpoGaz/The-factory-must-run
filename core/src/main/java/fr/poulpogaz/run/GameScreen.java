@@ -126,7 +126,7 @@ public class GameScreen implements Screen {
         if (input.selectedBlock != null) {
             input.selectedBlock.drawBuildPlan(input.tileX * TILE_SIZE,
                                               input.tileY * TILE_SIZE,
-                                              input.selectedBlockRotation);
+                                              input.selectedBlockDirection);
         }
 
         batch.end();

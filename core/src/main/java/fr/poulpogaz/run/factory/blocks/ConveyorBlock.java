@@ -1,14 +1,15 @@
 package fr.poulpogaz.run.factory.blocks;
 
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import fr.poulpogaz.run.Rotation;
+import fr.poulpogaz.run.Direction;
 import fr.poulpogaz.run.Utils;
 import fr.poulpogaz.run.factory.ConveyorManager;
 import fr.poulpogaz.run.factory.Tile;
+import fr.poulpogaz.run.factory.item.Item;
 
 import static fr.poulpogaz.run.Variables.*;
 
-public class ConveyorBlock extends Block {
+public class ConveyorBlock extends Block implements ItemConsumer {
 
     private TextureRegion[] straight;
     private TextureRegion[] turn;
@@ -45,9 +46,9 @@ public class ConveyorBlock extends Block {
     public void draw(Tile tile) {
         Data data = (Data) tile.getBlockData();
 
-        boolean left = canConnect(tile, data.rotation.rotate());
-        boolean behind = canConnect(tile, data.rotation.opposite());
-        boolean right = canConnect(tile, data.rotation.rotateCW());
+        boolean left = canConnect(tile, data.direction.rotate());
+        boolean behind = canConnect(tile, data.direction.opposite());
+        boolean right = canConnect(tile, data.direction.rotateCW());
 
         int frame = (int) ((factory.getTick() * speed() / 2)) % 8;
 
@@ -60,10 +61,10 @@ public class ConveyorBlock extends Block {
             textures = straight;
         }
 
-        Utils.draw(textures[frame], data.drawX(), data.drawY(), data.rotation.angle);
+        Utils.draw(textures[frame], data.drawX(), data.drawY(), data.direction.angle);
     }
 
-    private boolean canConnect(Tile tile, Rotation vec) {
+    private boolean canConnect(Tile tile, Direction vec) {
         Tile side = tile.adjacent(vec);
         if (side == null) {
             return false;
@@ -75,7 +76,7 @@ public class ConveyorBlock extends Block {
             return false;
         }
 
-        return side.getBlock() instanceof ConveyorBlock && b.rotation == vec.opposite();
+        return side.getBlock() instanceof ConveyorBlock && b.direction == vec.opposite();
     }
 
     @Override
@@ -111,9 +112,23 @@ public class ConveyorBlock extends Block {
         return 1;
     }
 
+    @Override
+    public boolean acceptItem(Tile tile, Item item) {
+        return ((Data) tile.getBlockData()).section.acceptItem(item);
+    }
+
+    @Override
+    public void passItem(Tile tile, Item item) {
+        ((Data) tile.getBlockData()).section.passItem(item);
+    }
+
     public static class Data extends BlockData {
 
         public ConveyorManager.ConveyorSection section;
         public Tile previousTile; // null if not in the same section
+
+        public boolean isStartOfSection() {
+            return section.isStartOfSection(tile);
+        }
     }
 }
