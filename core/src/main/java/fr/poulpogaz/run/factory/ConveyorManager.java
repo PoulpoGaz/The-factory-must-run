@@ -88,7 +88,7 @@ public class ConveyorManager {
         ConveyorSection facingSection = facingData.section;
 
         if (facingData.isSectionStart() && facingSection.parentCount == 0) {
-            facingSection.appendBefore((ConveyorData) conveyor.getBlockData());
+            facingSection.appendBeforeFirst((ConveyorData) conveyor.getBlockData());
         } else {
             if (facingData.isSectionStart() && facingSection.parentCount == 0 || !facingData.isSectionStart()) {
                 // split
@@ -117,7 +117,7 @@ public class ConveyorManager {
         Tile behind = conveyor.adjacent(behindDir);
         ConveyorBlock.Data data = (ConveyorBlock.Data) behind.getBlockData();
 
-        data.section.appendAfter((ConveyorData) conveyor.getBlockData());
+        data.section.appendAfterEnd((ConveyorData) conveyor.getBlockData());
     }
 
     private static void createNewSection(Tile conveyor) {
@@ -291,6 +291,62 @@ public class ConveyorManager {
         batch.begin();
     }
 
+    public static void drawGraphs() {
+        batch.end();
+        shape.begin(ShapeRenderer.ShapeType.Filled);
+
+        int tx = input.tileX;
+        int ty = input.tileY;
+        BlockData data = null;
+        if (factory.isInFactory(tx, ty)) {
+            data = factory.getBlockData(tx, ty);
+        }
+
+        for (int i = 0; i < sections.size; i++) {
+            ConveyorSection section = sections.get(i);
+            BlockGraph graph = section.graph;
+
+            if (graph == null) {
+                continue;
+            }
+
+            BlockFinder f = BlockFinder.instance;
+            boolean found = false;
+            if (data != null) {
+                found = f.find(graph, data);
+            }
+
+            float x = graph.x;
+            float y = graph.y;
+
+            BlockNode node = graph.start;
+            while (node != null) {
+                float r = node == graph.start || node == graph.end ? 3 : 2;
+                shape.getColor().fromHsv(360f * i / sections.size, 1, 1);
+                shape.circle(x, y, r);
+
+                boolean draw = found && node == f.node;
+
+                if (draw) {
+                    shape.setColor(Color.BLUE);
+                }
+                shape.line(x, y, x + node.dx(), y + node.dy());
+
+                if (draw) {
+                    shape.setColor(Color.RED);
+                    shape.line(x, y, x + node.direction.dx * f.length, y + node.direction.dy * f.length);
+                }
+                x = x + node.dx();
+                y = y + node.dy();
+                node = node.next;
+
+            }
+        }
+
+        shape.end();
+        batch.begin();
+    }
+
     public static class ConveyorSection {
 
         public static final int itemSpacing = 8;
@@ -310,6 +366,8 @@ public class ConveyorManager {
 
         private ConveyorData firstBlock; // block in which items are added
         private ConveyorData endBlock;
+
+        private BlockGraph graph;
 
         private int lastUpdate;
 
@@ -332,6 +390,8 @@ public class ConveyorManager {
             firstBlock = (ConveyorData) conveyor.getBlockData();
             endBlock = firstBlock;
             firstBlock.section = this;
+
+            graph = new BlockGraph(conveyor);
         }
 
         public void update() {
@@ -523,16 +583,18 @@ public class ConveyorManager {
         // *******************
 
 
-        public void appendBefore(ConveyorData before) {
-            firstBlock.previousBlock = before;
-            before.section = this;
-            firstBlock = before;
+        public void appendBeforeFirst(ConveyorData first) {
+            firstBlock.previousBlock = first;
+            first.section = this;
+            firstBlock = first;
 
             length += TILE_SIZE;
             availableLength += TILE_SIZE;
+
+            graph.addFirst(1, first.direction);
         }
 
-        public void appendAfter(ConveyorData after) {
+        public void appendAfterEnd(ConveyorData after) {
             after.previousBlock = endBlock;
             after.section = this;
             endBlock = after;
@@ -545,6 +607,8 @@ public class ConveyorManager {
             } else {
                 availableLength += TILE_SIZE;
             }
+
+            graph.addLast(1, after.direction);
         }
 
         /**
@@ -619,6 +683,10 @@ public class ConveyorManager {
             }
 
             sections.add(parent);
+
+            BlockGraph bis = graph.split(block);
+            parent.graph = graph;
+            graph = bis;
         }
 
         public void addParent(ConveyorSection section) {
@@ -694,6 +762,192 @@ public class ConveyorManager {
         public ItemList previous;
         public ItemList next;
         public float remaining; // length between this item and the next one
+    }
+
+    public static class BlockGraph {
+
+        private BlockNode start;
+        private BlockNode end;
+        private int x;
+        private int y;
+
+        public BlockGraph() {
+
+        }
+
+        public BlockGraph(Tile tile) {
+            start = new BlockNode();
+            start.length = TILE_SIZE;
+            start.direction = tile.getBlockData().direction;
+            end = start;
+
+            temp.set(-HALF_TILE_SIZE, 0);
+            start.direction.rotate(temp);
+            x = (int) (temp.x + tile.drawX() + HALF_TILE_SIZE);
+            y = (int) (temp.y + tile.drawY() + HALF_TILE_SIZE);
+        }
+
+        public void addLast(int conveyorCount, Direction dir) {
+            int len = conveyorCount * TILE_SIZE;
+            if (end.direction != dir) {
+                end.length += HALF_TILE_SIZE;
+                BlockNode newNode = new BlockNode();
+                newNode.length = len - HALF_TILE_SIZE;
+                newNode.direction = dir;
+
+                end.next = newNode;
+                newNode.previous = end;
+                end = newNode;
+            } else {
+                end.length += len;
+            }
+        }
+
+        public void addFirst(int conveyorCount, Direction dir) {
+            int len = conveyorCount * TILE_SIZE;
+
+            if (start.direction != dir) {
+                BlockNode newNode = new BlockNode();
+                newNode.length = len + HALF_TILE_SIZE;
+                newNode.next = start;
+                newNode.direction = dir;
+
+                x = x + HALF_TILE_SIZE * start.direction.dx - newNode.length * dir.dx;
+                y = y + HALF_TILE_SIZE * start.direction.dy - newNode.length * dir.dy;
+
+                start.previous = newNode;
+                start.length -= HALF_TILE_SIZE;
+                start = newNode;
+
+            } else {
+                start.length += len;
+                x -= dir.dx * len;
+                y -= dir.dy * len;
+            }
+        }
+
+        public BlockGraph split(BlockData block) {
+            BlockFinder f = BlockFinder.instance;
+
+            if (f.find(this, block)) {
+                BlockNode node = f.node;
+
+                BlockGraph g = new BlockGraph();
+                g.x = f.x + HALF_TILE_SIZE * node.direction.dx;
+                g.y = f.y + HALF_TILE_SIZE * node.direction.dy;
+
+                if (node.length - f.length <= HALF_TILE_SIZE) {
+                    g.start = node.next;
+                    g.start.previous = null;
+                    g.end = end;
+
+                    end = node;
+                    end.next = null;
+                } else {
+                    BlockNode newNode = new BlockNode();
+                    newNode.direction = node.direction;
+                    newNode.length = node.length - f.length - HALF_TILE_SIZE;
+                    node.length = f.length + HALF_TILE_SIZE;
+
+                    if (node == end) {
+                        g.start = newNode;
+                        g.end = newNode;
+                    } else {
+                        g.start = newNode;
+                        g.end = end;
+
+                        node.next.previous = null;
+                        node.next = null;
+
+                        end = node;
+                    }
+                }
+
+                return g;
+            }
+
+            return null;
+        }
+    }
+
+    public static class BlockNode {
+
+        private int length;
+        private Direction direction;
+        private BlockNode next;
+        private BlockNode previous;
+
+        public int dx() {
+            return length * direction.dx;
+        }
+
+        public int dy() {
+            return length * direction.dy;
+        }
+    }
+
+    public static class BlockFinder {
+
+        private static final BlockFinder instance = new BlockFinder();
+
+        // length between the beginning of the graph and the position of the block
+        public int totalLength;
+        public int length;
+        public BlockNode node;
+        public int x;
+        public int y;
+
+        public boolean find(BlockGraph graph, BlockData block) {
+            totalLength = 0;
+            length = 0;
+
+            x = graph.x;
+            y = graph.y;
+
+            BlockNode node = graph.start;
+            while (node != null) {
+                if (node.direction.dx != 0) {
+                    int x1 = (x / 32) * 32;
+                    int x2 = ((x + node.dx()) / 32) * 32;
+                    if (node.direction.dx < 0) {
+                        x1 = x2;
+                        x2 = x;
+                    }
+
+                    if (block.drawY() <= y && y <= block.drawY() + TILE_SIZE
+                        && x1 <= block.drawX() && block.drawX() <= x2) {
+                        length = node.direction.dx > 0 ? (block.drawX() - x) : (x - block.drawX() - TILE_SIZE);
+                        totalLength += length;
+                        x += node.direction.dx * length;
+                        this.node = node;
+                        return true;
+                    }
+                } else {
+                    int y1 = (y / 32) * 32;
+                    int y2 = ((y + node.dy()) / 32) * 32;
+                    if (node.direction.dy < 0) {
+                        y1 = y2;
+                        y2 = y;
+                    }
+
+                    if (block.drawX() <= x && x <= block.drawX() + TILE_SIZE
+                        && y1 <= block.drawY() && block.drawY() <= y2) {
+                        length = node.direction.dy > 0 ? (block.drawY() - y) : (y - block.drawY() - TILE_SIZE);
+                        y += node.direction.dy * length;
+                        totalLength += length;
+                        this.node = node;
+                        return true;
+                    }
+                }
+
+                x += node.dx();
+                y += node.dy();
+                totalLength += node.length;
+                node = node.next;
+            }
+
+            return false;
+        }
     }
 
     public static class BlockIterator {

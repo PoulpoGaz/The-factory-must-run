@@ -127,7 +127,8 @@ public class GameScreen implements Screen {
 
         drawFactory();
         ConveyorManager.drawItems();
-        ConveyorManager.drawConveyorSections();
+        // ConveyorManager.drawConveyorSections();
+        ConveyorManager.drawGraphs();
 
         // draw build plan
         if (input.selectedBlock != null) {
