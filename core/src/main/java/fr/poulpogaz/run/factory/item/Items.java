@@ -9,6 +9,6 @@ public class Items {
     public static void load() {
         IRON_PLATE = new Item("iron_plate");
         GEAR = new Item("gear");
-        PIPE = new Item("pip");
+        PIPE = new Item("pipe");
     }
 }

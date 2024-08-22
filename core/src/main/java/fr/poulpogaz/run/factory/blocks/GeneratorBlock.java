@@ -4,6 +4,8 @@ import fr.poulpogaz.run.Direction;
 import fr.poulpogaz.run.factory.Tile;
 import fr.poulpogaz.run.factory.item.Items;
 
+import java.lang.invoke.VarHandle;
+
 import static fr.poulpogaz.run.Variables.factory;
 
 public class GeneratorBlock extends Block {
@@ -14,28 +16,28 @@ public class GeneratorBlock extends Block {
 
     @Override
     public void tick(BlockData data) {
-        if (factory.tick % 30 == 0) {
+        if (factory.getTick() % 8 == 0) {
             Tile tile = data.tile;
 
             for (Direction direction : Direction.values) {
-                generateItem(tile.adjacent(direction), direction);
+                generateItem((Data) data, tile.adjacent(direction), direction);
             }
         }
     }
 
-    private void generateItem(Tile adjacent, Direction rot) {
+    private void generateItem(Data genData, Tile adjacent, Direction rot) {
         if (adjacent.getBlock() instanceof ConveyorBlock) {
             ConveyorBlock.Data data = (ConveyorBlock.Data) adjacent.getBlockData();
 
             if (data.direction == rot) {
-                data.section.passItem(Items.IRON_PLATE);
+                data.section.passItem(genData.i == 0 ? Items.IRON_PLATE : (genData.i == 1 ? Items.GEAR : Items.PIPE));
             }
         }
     }
 
     @Override
-    public BlockData createData() {
-        return new BlockData();
+    public BlockData createData(Tile tile) {
+        return new Data();
     }
 
     @Override
@@ -46,5 +48,23 @@ public class GeneratorBlock extends Block {
     @Override
     public int height() {
         return 1;
+    }
+
+    @Override
+    public boolean isUpdatable() {
+        return true;
+    }
+
+    private static class Data extends BlockData {
+
+        private static int count = 0;
+
+        private int i;
+
+        public Data() {
+            this.i = count;
+            count++;
+            System.out.println(i);
+        }
     }
 }

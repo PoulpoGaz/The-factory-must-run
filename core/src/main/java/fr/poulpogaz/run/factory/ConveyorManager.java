@@ -8,12 +8,14 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Pool;
 import fr.poulpogaz.run.Direction;
+import fr.poulpogaz.run.RelativeDirection;
 import fr.poulpogaz.run.Utils;
-import fr.poulpogaz.run.factory.blocks.BlockData;
-import fr.poulpogaz.run.factory.blocks.ConveyorBlock;
-import fr.poulpogaz.run.factory.blocks.ItemConsumer;
+import fr.poulpogaz.run.factory.blocks.*;
 import fr.poulpogaz.run.factory.item.Item;
 
+import java.util.Arrays;
+
+import static fr.poulpogaz.run.RelativeDirection.*;
 import static fr.poulpogaz.run.Variables.*;
 
 public class ConveyorManager {
@@ -24,28 +26,48 @@ public class ConveyorManager {
     private static int updatePass = 0;
 
     public static void newConveyor(Tile conveyor) {
-        ConveyorBlock block = (ConveyorBlock) conveyor.getBlock();
-        ConveyorBlock.Data data = (ConveyorBlock.Data) conveyor.getBlockData();
+        ConveyorData data = (ConveyorData) conveyor.getBlockData();
 
-        boolean added = false;
+        boolean linkedWithFacing = false;
         if (canConnectWithFacing(conveyor)) {
             linkWithFacing(conveyor);
-            added = true;
+            System.out.println("LINK FACING");
+            linkedWithFacing = true;
         }
 
+        boolean linkedWithBehind = false;
         Direction d = data.direction.rotate();
         while (d != data.direction) {
             if (canConnectWithBehind(conveyor, d)) {
-                linkWithBehind(conveyor, d);
-                added = true;
+                if (!linkedWithBehind) {
+                    if (linkedWithFacing) {
+                        merge(adjSection(conveyor, d), data.section);
+                        System.out.println("MERGE: " + d);
+                    } else {
+                        System.out.println("LINK BEHIND: " + d);
+                        linkWithBehind(conveyor, d);
+                    }
+                    linkedWithBehind = true;
+                } else {
+                    if (!data.isSectionStart()) {
+                        System.out.println("SPLIT");
+                        data.section.splitAt(data);
+                    }
+                    System.out.println("ADD PARENT: " + d);
+                    data.section.addParent(adjSection(conveyor, d));
+                }
             }
 
             d = d.rotate();
         }
 
-        if (!added) {
+        if (!linkedWithFacing && !linkedWithBehind) {
             createNewSection(conveyor);
         }
+    }
+
+    private static ConveyorSection adjSection(Tile tile, Direction direction) {
+        return ((ConveyorData) tile.adjacent(direction).getBlockData()).section;
     }
 
     /**
@@ -55,27 +77,29 @@ public class ConveyorManager {
         BlockData data = conveyor.getBlockData();
         Tile after = conveyor.adjacent(data.direction);
 
-        return after.getBlock() instanceof ConveyorBlock
+        return after.getBlock().isConveyor()
             && after.getBlockData().direction != data.direction.opposite();
     }
 
     private static void linkWithFacing(Tile conveyor) {
         Tile facing = conveyor.adjacent(conveyor.getBlockData().direction);
-        ConveyorBlock.Data facingData = (ConveyorBlock.Data) facing.getBlockData();
+        ConveyorData facingData = (ConveyorData) facing.getBlockData();
 
         ConveyorSection facingSection = facingData.section;
 
-        if (facingData.isStartOfSection() && facingSection.parentsSize == 0) {
-            facingSection.appendBefore(conveyor);
+        if (facingData.isSectionStart() && facingSection.parentCount == 0) {
+            facingSection.appendBefore((ConveyorData) conveyor.getBlockData());
         } else {
-            if (facingData.isStartOfSection() && facingSection.parentsSize == 0 || !facingData.isStartOfSection()) {
+            if (facingData.isSectionStart() && facingSection.parentCount == 0 || !facingData.isSectionStart()) {
                 // split
                 Gdx.app.debug("Conveyor", "Splitting section at tile " + facing.x + ", " + facing.y);
-                facingSection.splitAt(facing);
+                facingSection.splitAt(facingData);
             }
 
             // create new conveyor section
-            facingSection.addParent(new ConveyorSection(conveyor));
+            ConveyorSection s = new ConveyorSection(conveyor);
+            sections.add(s);
+            facingSection.addParent(s);
         }
     }
 
@@ -85,7 +109,7 @@ public class ConveyorManager {
     private static boolean canConnectWithBehind(Tile conveyor, Direction behindDir) {
         Tile behind = conveyor.adjacent(behindDir);
 
-        return behind.getBlock() instanceof ConveyorBlock
+        return behind.getBlock().isConveyor()
             && behind.getBlockData().direction == behindDir.opposite();
     }
 
@@ -93,13 +117,80 @@ public class ConveyorManager {
         Tile behind = conveyor.adjacent(behindDir);
         ConveyorBlock.Data data = (ConveyorBlock.Data) behind.getBlockData();
 
-        data.section.appendAfter(conveyor);
+        data.section.appendAfter((ConveyorData) conveyor.getBlockData());
     }
 
     private static void createNewSection(Tile conveyor) {
         Gdx.app.debug("Conveyor", "Creating new conveyor section");
 
         sections.add(new ConveyorSection(conveyor));
+    }
+
+    /**
+     * Merge 'before' and 'after'.
+     * 'before' will be removed
+     */
+    private static void merge(ConveyorSection before, ConveyorSection after) {
+        if (before.endBlock.facing() != after.firstBlock.tile
+            && after.firstBlock.direction != before.endBlock.direction) {
+            throw new IllegalStateException("Cannot merge: disconnected sections");
+        }
+
+        if (before.childrenCount > 0) {
+            throw new IllegalStateException("'before' should have zero child");
+        }
+        if (after.parentCount > 0) {
+            throw new IllegalStateException("'after' should have zero parent");
+        }
+
+        after.firstBlock.previousBlock = before.endBlock;
+        after.firstBlock = before.firstBlock;
+        // update parents
+        copyParentsTo(before, after);
+
+        // move items and update lengths
+        if (before.firstItem != null && after.firstItem != null) {
+            after.lastItem.previous = before.firstItem;
+            before.firstItem.next = after.lastItem;
+            before.firstItem.remaining += after.availableLength;
+            after.lastItem = before.lastItem;
+            after.firstNonBlockedItem = after.firstItem;
+            after.availableLength = before.availableLength;
+        } else if (before.firstItem != null) {
+            after.firstItem = before.firstItem;
+            after.firstNonBlockedItem = before.firstItem;
+            after.lastItem = before.lastItem;
+            after.firstItem.remaining += after.length;
+            after.availableLength = before.availableLength;
+        } else {
+            // no item to move
+            after.availableLength += before.availableLength;
+        }
+        after.length += before.length;
+
+        // update block data
+        ConveyorData b = before.endBlock;
+        while (b != null) {
+            b.section = after;
+            b = b.previousBlock;
+        }
+
+        sections.removeValue(before, true);
+    }
+
+    private static void copyParentsTo(ConveyorSection src, ConveyorSection dest) {
+        dest.parentCount = src.parentCount;
+        System.arraycopy(src.parents, 0, dest.parents, 0, 3);
+        for (int i = 0; i < 3; i++) {
+            ConveyorSection parPar = dest.parents[i];
+            if (parPar != null) {
+                RelativeDirection rc = relativePos(parPar.endBlock, dest.firstBlock);
+                int ic = rc.ordinal();
+                parPar.children[ic] = dest;
+            }
+        }
+
+        Arrays.fill(src.parents, null);
     }
 
     public static void tick() {
@@ -125,23 +216,23 @@ public class ConveyorManager {
             // rotation to use to draw items at the beginning of a conveyor
             Direction direction = null;
 
-            Tile previousTile = null;
+            ConveyorData previousBlock = null;
             while (it.hasNext()) {
                 it.next();
 
-                if (it.tile != previousTile) {
-                    Tile previous = ((ConveyorBlock.Data) it.tile.getBlockData()).previousTile;
+                if (it.block != previousBlock) {
+                    ConveyorData previous = it.block.previousBlock;
                     if (previous != null) {
-                        direction = previous.getBlockData().direction;
+                        direction = previous.direction;
                     } else {
-                        direction = it.tile.getBlockData().direction;
+                        direction = it.block.direction;
                     }
                 }
 
                 // choose the rotation depending on the position of the item
                 Direction r;
                 if (direction == null || it.length < HALF_TILE_SIZE) {
-                    r = it.tile.getBlockData().direction; // end of the conveyor
+                    r = it.block.direction; // end of the conveyor
                 } else {
                     r = direction; // beginning of the conveyor
                 }
@@ -151,10 +242,10 @@ public class ConveyorManager {
 
                 TextureRegion icon = it.item().getIcon();
                 batch.draw(icon,
-                           it.tile.drawX() + temp.x + HALF_TILE_SIZE / 2f,
-                           it.tile.drawY() + temp.y + HALF_TILE_SIZE / 2f);
+                           it.block.drawX() + temp.x + HALF_TILE_SIZE / 2f,
+                           it.block.drawY() + temp.y + HALF_TILE_SIZE / 2f);
 
-                previousTile = it.tile;
+                previousBlock = it.block;
             }
         }
     }
@@ -166,25 +257,23 @@ public class ConveyorManager {
             ConveyorSection section = sections.get(i);
 
             shape.setColor(Color.GREEN);
-            Tile tile = section.endTile;
-            while (tile != null) {
-                ConveyorBlock.Data data = (ConveyorBlock.Data) tile.getBlockData();
+            ConveyorData block = section.endBlock;
+            while (block != null) {
+                float x = block.drawX();
+                float y = block.drawY();
 
-                float x = tile.drawX();
-                float y = tile.drawY();
+                int dx = block.direction.dx;
+                int dy = block.direction.dy;
 
-                int dx = data.direction.dx;
-                int dy = data.direction.dy;
-
-                Tile next = data.previousTile;
-                if (next != null && next.getBlockData().direction != data.direction) {
+                ConveyorData next = block.previousBlock;
+                if (next != null && next.direction != block.direction) {
                     float cx = x + HALF_TILE_SIZE;
                     float cy = y + HALF_TILE_SIZE;
 
                     shape.line(cx, cy, cx + dx * HALF_TILE_SIZE, cy + dy * HALF_TILE_SIZE);
 
-                    int dx2 = next.getBlockData().direction.opposite().dx;
-                    int dy2 = next.getBlockData().direction.opposite().dy;
+                    int dx2 = next.direction.opposite().dx;
+                    int dy2 = next.direction.opposite().dy;
 
                     shape.line(cx, cy, cx + dx2 * HALF_TILE_SIZE, cy + dy2 * HALF_TILE_SIZE);
                 } else if (dx != 0) {
@@ -193,7 +282,7 @@ public class ConveyorManager {
                     shape.line(x + HALF_TILE_SIZE, y, x + HALF_TILE_SIZE, y + TILE_SIZE);
                 }
 
-                tile = next;
+                block = next;
 
                 shape.setColor(Color.BLUE);
             }
@@ -202,23 +291,25 @@ public class ConveyorManager {
         batch.begin();
     }
 
-    /**
-     * @return the tile before 'tile' in the conveyor section
-     */
-    private static Tile previous(Tile tile) {
-        return ((ConveyorBlock.Data) tile.getBlockData()).previousTile;
-    }
-
     public static class ConveyorSection {
 
         public static final int itemSpacing = 8;
 
+        // parents[0] -> left
+        // parents[1] -> right
+        // parents[2] -> behind
+        // => RelativeDirection.ordinal() - 1
         private final ConveyorSection[] parents = new ConveyorSection[3];
-        private int parentsSize;
-        private ConveyorSection child;
+        private int parentCount;
+        // children[0] -> facing
+        // children[1] -> left
+        // children[2] -> right
+        // => RelativeDirection.ordinal()
+        private final ConveyorSection[] children = new ConveyorSection[3];
+        private int childrenCount;
 
-        private Tile firstTile; // tile in which items are added
-        private Tile endTile;
+        private ConveyorData firstBlock; // block in which items are added
+        private ConveyorData endBlock;
 
         private int lastUpdate;
 
@@ -226,10 +317,10 @@ public class ConveyorManager {
         private ItemList firstNonBlockedItem;
         private ItemList lastItem;
 
-        private float conveyorSpeed = 0;
-
         private float length;
         private float availableLength;
+
+        private boolean selectedInput = false;
 
         public ConveyorSection() {
         }
@@ -238,10 +329,9 @@ public class ConveyorManager {
         public ConveyorSection(Tile conveyor) {
             length = TILE_SIZE;
             availableLength = TILE_SIZE;
-            endTile = conveyor;
-            firstTile = conveyor;
-            conveyorSpeed = ((ConveyorBlock) conveyor.getBlock()).speed();
-            ((ConveyorBlock.Data) conveyor.getBlockData()).section = this;
+            firstBlock = (ConveyorData) conveyor.getBlockData();
+            endBlock = firstBlock;
+            firstBlock.section = this;
         }
 
         public void update() {
@@ -251,38 +341,61 @@ public class ConveyorManager {
 
             lastUpdate = updatePass;
 
+            selectInput();
+
             // transfer item
             if (firstItem != null && firstItem.remaining == 0) {
-                Tile next = endTile.adjacent(endTile.getBlockData().direction);
-                if (next.getBlock() instanceof ItemConsumer) {
-                    ItemConsumer c = (ItemConsumer) next.getBlock();
+                transferItems();
+            }
 
-                    if (c.acceptItem(next, firstItem.item)) {
-                        ItemList prev = firstItem.previous;
-                        if (prev != null) {
-                            prev.next = null;
-                        } else {
-                            lastItem = null;
-                        }
-                        Item item = firstItem.item;
+            // move items
+            if (firstItem != null) {
+                moveItems();
+            }
+        }
 
-                        itemListPool.free(firstItem);
-                        c.passItem(next, item);
+        private void selectInput() {
+            int[] prio = firstBlock.inputPriorities();
 
-                        firstItem = prev;
-                        firstNonBlockedItem = prev;
+            ConveyorSection best = null;
+            int index = -1;
+            for (int i = 0; i < parents.length; i++) {
+                ConveyorSection cur = parents[i];
+                if (cur != null) {
+                    cur.selectedInput = false;
 
+                    if (cur.firstItem != null
+                        && (best == null
+                            || cur.firstItem.remaining < best.firstItem.remaining
+                            || cur.firstItem.remaining == best.firstItem.remaining && prio[i] > prio[index])) {
+                        best = cur;
+                        index = i;
                     }
                 }
+            }
+
+            if (best != null) {
+                best.selectedInput = true;
+            }
+        }
+
+        private void moveItems() {
+            if (selectedInput && firstItem != firstNonBlockedItem && firstItem.remaining >= 8) {
+                firstNonBlockedItem = firstItem;
             }
 
             if (firstNonBlockedItem == null) {
                 return;
             }
 
-            int spacing = firstNonBlockedItem == firstItem ? 0 : itemSpacing;
+            float spacing;
+            if (firstNonBlockedItem == firstItem && (childrenCount == 0 || selectedInput)) {
+                spacing = 0;
+            } else {
+                spacing = itemSpacing;
+            }
 
-            firstNonBlockedItem.remaining -= conveyorSpeed;
+            firstNonBlockedItem.remaining -= conveyorSpeed();
             if (firstNonBlockedItem.remaining < spacing) {
                 firstNonBlockedItem.remaining = spacing;
 
@@ -290,24 +403,139 @@ public class ConveyorManager {
                     firstNonBlockedItem = firstNonBlockedItem.previous;
                 } while (firstNonBlockedItem != null && firstNonBlockedItem.remaining == spacing);
             } else {
-                availableLength += conveyorSpeed;
+                availableLength += conveyorSpeed();
             }
         }
 
-        public void appendBefore(Tile before) {
-            ((ConveyorBlock.Data) firstTile.getBlockData()).previousTile = before;
-            ((ConveyorBlock.Data) before.getBlockData()).section = this;
-            firstTile = before;
+        // **********************
+        // * item pass/transfer *
+        // **********************
+
+        /**
+         * Transfer all items where remaining is strictly less than conveyor speed
+         */
+        private void transferItems() {
+            boolean transferred = true;
+            while (firstItem != null && firstItem.remaining < conveyorSpeed() && transferred) {
+                transferred = false;
+
+                for (int attempt = 0; attempt < 3 && !transferred; attempt++) {
+                    RelativeDirection output = endBlock.outputPriority(firstItem.item, attempt);
+
+                    ConveyorSection sub = children[output.ordinal()];
+                    if (sub != null) {
+                        float remaining = firstItem.remaining;
+                        if (sub.acceptItem(firstItem.item)) {
+                            Item item = removeFirstItem();
+                            sub.passItem(item, conveyorSpeed() - remaining);
+                            sub.firstBlock.updateInputPriority(relative(sub.firstBlock.direction, output.absolute(endBlock.direction).opposite()));
+                            transferred = true;
+                        }
+                    } else {
+                        Tile next = endBlock.adjacentRelative(output);
+                        Block block = next.getBlock();
+
+                        if (block instanceof ItemConsumer) {
+                            transferred = transferFirstItemTo(next, (ItemConsumer) block);
+                        }
+                    }
+                }
+            }
+        }
+
+        private boolean transferFirstItemTo(Tile tile, ItemConsumer consumer) {
+            if (consumer.acceptItem(tile, firstItem.item)) {
+                Item item = removeFirstItem();
+                consumer.passItem(tile, item);
+                return true;
+            }
+            return false;
+        }
+
+        private Item removeFirstItem() {
+            if (firstItem == null) {
+                return null;
+            }
+
+            ItemList prev = firstItem.previous;
+            if (prev != null) {
+                prev.next = null;
+            } else {
+                lastItem = null;
+            }
+
+            Item item = firstItem.item;
+            itemListPool.free(firstItem);
+
+            firstItem = prev;
+            firstNonBlockedItem = prev;
+
+            return item;
+        }
+
+        public void passItem(Item item) {
+            passItem(item, 0);
+        }
+
+        private void passItem(Item item, float advance) {
+            if (!acceptItem(item)) {
+                return;
+            }
+
+            ItemList list = itemListPool.obtain();
+            list.item = item;
+            list.next = lastItem;
+            list.previous = null;
+
+            if (lastItem == null) { // no item on conveyor
+                // update distances
+                list.remaining = length - Math.min(advance, length);
+                availableLength = length - list.remaining;
+
+                // update linked list
+                firstNonBlockedItem = list.remaining == 0 ? null : list;
+                firstItem = list;
+                lastItem = list;
+            } else {
+                // update distances
+                float adv = Math.min(advance, availableLength - itemSpacing);
+
+                list.remaining = availableLength - adv;
+                availableLength = adv;
+
+                // update linked list
+                lastItem.previous = list;
+                lastItem = list;
+
+                if (firstNonBlockedItem == null && list.remaining > itemSpacing) {
+                    firstNonBlockedItem = list;
+                }
+            }
+        }
+
+        public boolean acceptItem(Item item) {
+            return availableLength >= itemSpacing;
+        }
+
+
+        // *******************
+        // * topology update *
+        // *******************
+
+
+        public void appendBefore(ConveyorData before) {
+            firstBlock.previousBlock = before;
+            before.section = this;
+            firstBlock = before;
 
             length += TILE_SIZE;
             availableLength += TILE_SIZE;
         }
 
-        public void appendAfter(Tile after) {
-            ConveyorBlock.Data data = (ConveyorBlock.Data) after.getBlockData();
-            data.previousTile = endTile;
-            data.section = this;
-            endTile = after;
+        public void appendAfter(ConveyorData after) {
+            after.previousBlock = endBlock;
+            after.section = this;
+            endBlock = after;
 
             length += TILE_SIZE;
 
@@ -319,77 +547,36 @@ public class ConveyorManager {
             }
         }
 
-        public void passItem(Item item) {
-            if (!acceptItem(item)) {
+        /**
+         * block will be in this section
+         */
+        public void splitAt(ConveyorData block) {
+            if (block == firstBlock) {
                 return;
             }
 
-            ItemList list = itemListPool.obtain();
-            list.item = item;
-            list.next = lastItem;
-            list.previous = null;
-
-            if (lastItem == null) {
-                list.remaining = length;
-                firstItem = list;
-                firstNonBlockedItem = firstItem;
-            } else {
-                if (firstNonBlockedItem == null && availableLength > 0) {
-                    firstNonBlockedItem = list;
-                }
-
-                list.remaining = availableLength;
-                lastItem.previous = list;
-            }
-            lastItem = list;
-            availableLength = 0;
-        }
-
-        public boolean acceptItem(Item item) {
-            return availableLength >= itemSpacing;
-        }
-
-        public boolean isStartOfSection(Tile tile) {
-            return firstTile == tile;
-        }
-
-        public boolean isEndOfSection(Tile tile) {
-            return endTile == tile;
-        }
-
-        public void splitAt(Tile tile) {
-            if (tile == firstTile) {
-                return; // create a 0-length section ?
-            }
-
-            // update parents/child
             ConveyorSection parent = new ConveyorSection();
-            parent.conveyorSpeed = conveyorSpeed;
-            parent.child = this;
-
-            for (int i = 0; i < parentsSize; i++) {
-                parents[i].child = parent;
-            }
-
-            parentsSize = 1;
-            parents[0] = parent;
-
             // update first/end tiles
-            parent.firstTile = firstTile;
-            parent.endTile = previous(tile);
-            firstTile = tile;
+            parent.firstBlock = firstBlock;
+            parent.endBlock = block.previousBlock;
+            firstBlock = block;
 
+            // update parents
+            // copy parents of this to parent
+            copyParentsTo(this, parent);
+            addParent(parent);
 
             // move items and update lengths
-            TileIterator it = TileIterator.instance;
+            BlockIterator it = BlockIterator.instance;
             it.set(this);
-            it.moveTo(parent.endTile);
+            it.moveTo(parent.endBlock);
 
             parent.length = length - it.totalLength;
             length = it.totalLength;
 
             if (it.list == null) {
                 // no items move to parent
+                availableLength -= parent.length;
                 parent.availableLength = parent.length;
 
             } else if (it.list.next == null) {
@@ -399,6 +586,7 @@ public class ConveyorManager {
                 parent.lastItem = lastItem;
                 parent.firstNonBlockedItem = firstItem;
                 parent.availableLength = availableLength;
+                firstItem.remaining -= length;
 
                 availableLength = it.totalLength;
                 firstItem = null;
@@ -406,36 +594,97 @@ public class ConveyorManager {
                 lastItem = null;
             } else {
                 // partial
-
                 parent.firstItem = it.list;
                 parent.lastItem = lastItem;
-                parent.firstNonBlockedItem = firstItem;
+                parent.firstNonBlockedItem = parent.firstItem;
                 parent.availableLength = availableLength;
 
-                lastItem = it.list.next;
-                availableLength = it.length - it.list.remaining;
+                firstNonBlockedItem = firstItem;
+                lastItem = parent.firstItem.next;
+                availableLength = parent.firstItem.remaining - it.length;
+
+                parent.firstItem.remaining = it.length;
+                parent.firstItem.next = null;
+                lastItem.previous = null;
             }
 
 
             // update block data
-            ((ConveyorBlock.Data) tile.getBlockData()).previousTile = null;
+            block.previousBlock = null;
 
-            Tile t = parent.endTile;
-            while (t != null) {
-                ConveyorBlock.Data data = (ConveyorBlock.Data) t.getBlockData();
-                data.section = parent;
-                t = data.previousTile;
+            ConveyorData b = parent.endBlock;
+            while (b != null) {
+                b.section = parent;
+                b = b.previousBlock;
             }
 
             sections.add(parent);
         }
 
         public void addParent(ConveyorSection section) {
-            section.child = this;
-            parents[parentsSize] = section;
-            parentsSize++;
+            if (section.endBlock.adjacentRelative(FACING) != firstBlock.tile) {
+                throw new IllegalArgumentException("'section' cannot be parent because the end block isn't facing to the section");
+            }
 
-            sections.add(section);
+            RelativeDirection r = relativePos(firstBlock, section.endBlock);
+            int i = r.ordinal() - 1;
+
+            RelativeDirection rc = relativePos(section.endBlock, firstBlock);
+            int ic = rc.ordinal();
+
+            if (parents[i] == section) {
+                return;
+            }
+            if (parents[i] != null) {
+                throw new IllegalStateException("Already has a parent in this direction: " + r);
+            }
+            if (section.children[ic] != null) {
+                throw new IllegalStateException("'section' already has a child in direction: " + rc);
+            }
+
+            section.children[ic] = this;
+            section.childrenCount++;
+            parents[i] = section;
+            parentCount++;
+        }
+
+        public void removeParent(ConveyorSection section) {
+            RelativeDirection r = relativePos(firstBlock, section.endBlock);
+            int i = r.ordinal() - 1;
+
+            RelativeDirection rc = relativePos(section.endBlock, firstBlock);
+            int ic = rc.ordinal();
+
+            if (parents[i] != null) {
+                throw new IllegalStateException("No parent found in direction " + r);
+            }
+            if (parents[i] != section) {
+                throw new IllegalStateException("Not the same section");
+            }
+            section.children[ic] = null;
+            section.childrenCount--;
+            parents[i] = null;
+            parentCount--;
+        }
+
+        public void addChild(ConveyorSection section) {
+            section.addParent(this);
+        }
+
+        public void removeChild(ConveyorSection child) {
+            child.removeParent(this);
+        }
+
+        public boolean isSectionStart(BlockData data) {
+            return firstBlock == data;
+        }
+
+        public boolean isSectionEnd(ConveyorData data) {
+            return endBlock == data;
+        }
+
+        private float conveyorSpeed() {
+            return firstBlock.speed();
         }
     }
 
@@ -447,12 +696,11 @@ public class ConveyorManager {
         public float remaining; // length between this item and the next one
     }
 
-    public static class TileIterator {
+    public static class BlockIterator {
 
-        private static final TileIterator instance = new TileIterator();
+        private static final BlockIterator instance = new BlockIterator();
 
-        private Tile tile;
-        private ConveyorBlock.Data data;
+        private ConveyorData block;
         private ItemList list;
 
         // distance between the current tile and the next item
@@ -466,8 +714,7 @@ public class ConveyorManager {
 
         public void set(ConveyorSection section) {
             list = section.firstItem;
-            tile = section.endTile;
-            data = (ConveyorBlock.Data) tile.getBlockData();
+            block = section.endBlock;
 
             totalLength = 0;
             length = list == null ? -1 : list.remaining;
@@ -481,16 +728,18 @@ public class ConveyorManager {
                 return;
             }
 
-            tile = data.previousTile;
-            data = (ConveyorBlock.Data) tile.getBlockData();
+            block = block.previousBlock;
             totalLength += TILE_SIZE;
 
             if (list != null) {
                 length -= TILE_SIZE;
 
-                while (length < 0 && list != null) {
-                    length += list.remaining;
+                while (length < 0) {
                     list = list.previous;
+                    if (list == null) {
+                        break;
+                    }
+                    length += list.remaining;
                 }
 
                 if (list == null) {
@@ -500,11 +749,11 @@ public class ConveyorManager {
         }
 
         public boolean hasNext() {
-            return start || data.previousTile != null;
+            return start || block.previousBlock != null;
         }
 
-        public void moveTo(Tile tile) {
-            while (hasNext() && this.tile != tile) {
+        public void moveTo(BlockData block) {
+            while (hasNext() && this.block != block) {
                 next();
             }
         }
@@ -519,7 +768,7 @@ public class ConveyorManager {
 
         private static final ItemList initList = new ItemList();
 
-        private Tile tile;
+        private ConveyorData block;
         private ItemList list;
 
         // distance between the current tile and the current item
@@ -531,7 +780,7 @@ public class ConveyorManager {
         public void set(ConveyorSection section) {
             list = initList;
             initList.previous = section.firstItem;
-            tile = section.endTile;
+            block = section.endBlock;
 
             totalLength = 0;
             length = 0;
@@ -548,7 +797,7 @@ public class ConveyorManager {
 
             // find the tile
             while (length > TILE_SIZE) {
-                tile = ((ConveyorBlock.Data) tile.getBlockData()).previousTile;
+                block = block.previousBlock;
                 length -= TILE_SIZE;
                 totalLength += TILE_SIZE;
             }

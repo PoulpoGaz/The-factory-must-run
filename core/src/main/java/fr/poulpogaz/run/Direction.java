@@ -61,16 +61,4 @@ public enum Direction {
             v.x * dy + v.y * dx
         );
     }
-
-    public static Direction displacementToRotation(int dx, int dy) {
-        if (dx > 0) {
-            return Direction.LEFT;
-        } else if (dx < 0) {
-            return Direction.RIGHT;
-        } else if (dy > 0) {
-            return Direction.UP;
-        } else {
-            return Direction.DOWN;
-        }
-    }
 }

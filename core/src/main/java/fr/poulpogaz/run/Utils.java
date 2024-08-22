@@ -10,8 +10,7 @@ import com.badlogic.gdx.utils.Pool;
 import java.awt.geom.Rectangle2D;
 import java.util.function.Supplier;
 
-import static fr.poulpogaz.run.Variables.batch;
-import static fr.poulpogaz.run.Variables.font;
+import static fr.poulpogaz.run.Variables.*;
 
 public class Utils {
 
@@ -113,5 +112,9 @@ public class Utils {
         TextureRegion r = new TextureRegion(region);
         r.flip(flipX, flipY);
         return r;
+    }
+
+    public static TextureRegion[] loadAnimation(String name) {
+        return atlas.findRegions(name).toArray();
     }
 }

@@ -43,7 +43,7 @@ public class Factory {
         for (int i = 0; i < tiles.length; i++) {
             Tile tile = tiles[i];
 
-            if (tile.getBlock() != null) {
+            if (tile.getBlock().isUpdatable()) {
                 tile.getBlock().tick(tile.getBlockData());
             }
         }
@@ -51,7 +51,14 @@ public class Factory {
         ConveyorManager.tick();
     }
 
+    public void setBlock(int x, int y, Block selectedBlock) {
+        setBlock(x, y, selectedBlock, Direction.LEFT);
+    }
+
     public void setBlock(int x, int y, Block selectedBlock, Direction direction) {
+        if (direction == null) {
+            direction = Direction.LEFT;
+        }
         getTile(x, y).setBlock(selectedBlock, direction);
     }
 

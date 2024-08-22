@@ -48,7 +48,7 @@ public abstract class Block extends Content {
 
     }
 
-    public void onBlockReplaced(Tile tile, Block newBlock, BlockData newBlockData) {
+    public void onBlockReplaced(Tile tile, BlockData oldData) {
 
     }
 
@@ -56,7 +56,7 @@ public abstract class Block extends Content {
 
     }
 
-    public BlockData createData() {
+    public BlockData createData(Tile tile) {
         return null;
     }
 
@@ -66,6 +66,19 @@ public abstract class Block extends Content {
 
     public boolean canBeRotated() {
         return canBeRotated;
+    }
+
+    // true if data is ConveyorData
+    public boolean isConveyor() {
+        return false;
+    }
+
+    public boolean isAir() {
+        return false;
+    }
+
+    public boolean isUpdatable() {
+        return false;
     }
 
     @Override

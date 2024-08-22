@@ -2,11 +2,13 @@ package fr.poulpogaz.run.factory.blocks;
 
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import fr.poulpogaz.run.Direction;
+import fr.poulpogaz.run.RelativeDirection;
 import fr.poulpogaz.run.Utils;
 import fr.poulpogaz.run.factory.ConveyorManager;
 import fr.poulpogaz.run.factory.Tile;
 import fr.poulpogaz.run.factory.item.Item;
 
+import static fr.poulpogaz.run.Utils.loadAnimation;
 import static fr.poulpogaz.run.Variables.*;
 
 public class ConveyorBlock extends Block implements ItemConsumer {
@@ -24,22 +26,13 @@ public class ConveyorBlock extends Block implements ItemConsumer {
     public void load() {
         super.load();
 
-        straight = loadRegions("conveyor");
-        turn = loadRegions("conveyor_turn");
+        straight = loadAnimation("conveyor");
+        turn = loadAnimation("conveyor_turn");
 
         turnFlipped = new TextureRegion[turn.length];
         for (int i = 0; i < turn.length; i++) {
             turnFlipped[i] = Utils.flip(turn[i], false, true);
         }
-    }
-
-    private TextureRegion[] loadRegions(String name) {
-        TextureRegion[] r = new TextureRegion[8];
-        for (int i = 0; i < r.length; i++) {
-            r[i] = atlas.findRegion(name, i + 1);
-        }
-
-        return r;
     }
 
     @Override
@@ -70,13 +63,14 @@ public class ConveyorBlock extends Block implements ItemConsumer {
             return false;
         }
 
-        BlockData b = side.getBlockData();
-
-        if (b == null) {
+        Block block = side.getBlock();
+        if (!block.isConveyor()) {
             return false;
         }
 
-        return side.getBlock() instanceof ConveyorBlock && b.direction == vec.opposite();
+        ConveyorData data = (ConveyorData) side.getBlockData();
+
+        return data.direction == vec.opposite();
     }
 
     @Override
@@ -90,8 +84,8 @@ public class ConveyorBlock extends Block implements ItemConsumer {
     }
 
     @Override
-    public BlockData createData() {
-        return new Data();
+    public Data createData(Tile tile) {
+        return new Data((ConveyorBlock) tile.getBlock());
     }
 
 
@@ -122,13 +116,72 @@ public class ConveyorBlock extends Block implements ItemConsumer {
         ((Data) tile.getBlockData()).section.passItem(item);
     }
 
-    public static class Data extends BlockData {
+    @Override
+    public boolean isConveyor() {
+        return true;
+    }
 
-        public ConveyorManager.ConveyorSection section;
-        public Tile previousTile; // null if not in the same section
+    @Override
+    public boolean isUpdatable() {
+        return true;
+    }
 
-        public boolean isStartOfSection() {
-            return section.isStartOfSection(tile);
+    public static class Data extends ConveyorData {
+
+        public final ConveyorBlock block;
+
+        private int[] priorities = {0, 1, 2};
+
+        public Data(ConveyorBlock block) {
+            this.block = block;
+        }
+
+        @Override
+        public float speed() {
+            return block.speed();
+        }
+
+        @Override
+        public int inputCount() {
+            return 0;
+        }
+
+        @Override
+        public int outputCount() {
+            return 1;
+        }
+
+        @Override
+        public int[] inputPriorities() {
+            return priorities;
+        }
+
+        @Override
+        public void updateInputPriority(RelativeDirection choice) {
+            int i = choice.ordinal() - 1;
+            priorities[i] = 0;
+
+            int i2 = (i + 1) % 3;
+            int i3 = (i2 + 1) % 3;
+
+            if (priorities[i3] == 2) {
+                priorities[i2] = 1;
+            } else if (priorities[i2] == 2) {
+                priorities[i3] = 1;
+            } else {
+                priorities[i2]++;
+                priorities[i3]++;
+            }
+        }
+
+        @Override
+        public RelativeDirection outputPriority(Item item, int attempt) {
+            return RelativeDirection.FACING;
+        }
+
+        @Override
+        public void updateOutputPriority() {
+
         }
     }
 }

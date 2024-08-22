@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.math.Vector3;
 import fr.poulpogaz.run.factory.blocks.Block;
+import fr.poulpogaz.run.factory.blocks.Blocks;
 
 import static fr.poulpogaz.run.Variables.*;
 
@@ -32,6 +33,10 @@ public class GameInput extends BasicInputProcessor {
         tileY = (int) (world.y / TILE_SIZE);
 
         moveCamera();
+
+        if (factory.isInFactory(tileX, tileY) && isMousePressed(Input.Buttons.RIGHT)) {
+            factory.setBlock(tileX, tileY, Blocks.AIR);
+        }
 
         if (selectedBlock != null) {
             if (factory.isInFactory(tileX, tileY) && isMousePressed(Input.Buttons.LEFT)) {

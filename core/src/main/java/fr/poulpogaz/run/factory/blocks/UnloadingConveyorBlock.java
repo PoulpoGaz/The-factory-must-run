@@ -10,11 +10,6 @@ public class UnloadingConveyorBlock extends Block {
     }
 
     @Override
-    public BlockData createData() {
-        return super.createData();
-    }
-
-    @Override
     public int width() {
         return 1;
     }

@@ -48,6 +48,13 @@ public class GameScreen implements Screen {
         });
 
         Button router = new Button(new Image(atlas.findRegion("router")), skin);
+        router.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                input.select(Blocks.ROUTER);
+            }
+        });
+
         Button undergroundConveyor = new Button(new Image(atlas.findRegion("underground_conveyor_input")), skin);
 
         Button wall = new Button(new Image(atlas.findRegion("wall")), skin);

@@ -3,13 +3,14 @@ package fr.poulpogaz.run.factory;
 import fr.poulpogaz.run.Direction;
 import fr.poulpogaz.run.factory.blocks.Block;
 import fr.poulpogaz.run.factory.blocks.BlockData;
+import fr.poulpogaz.run.factory.blocks.Blocks;
 
 import static fr.poulpogaz.run.Variables.TILE_SIZE;
 import static fr.poulpogaz.run.Variables.factory;
 
 public class Tile {
 
-    private Block block = null;
+    private Block block = Blocks.AIR;
     private BlockData data = null;
     private Floor floor = Floor.GROUND;
 
@@ -50,27 +51,20 @@ public class Tile {
 
             block.onBlockRotated(this, direction);
             data.direction = direction;
-        } else if (this.block != null) {
+        } else  {
             // replace
-            BlockData newData = block.createData();
-            if (newData != null) {
-                newData.tile = this;
-                newData.direction = direction;
-            }
+            Block oldBlock = this.block;
+            BlockData oldData = this.data;
 
-            block.onBlockReplaced(this, block, newData);
             this.block = block;
-            data = newData;
-        } else {
-            // build
-            this.block = block;
-            data = block.createData();
+            data = block.createData(this);
 
             if (data != null) {
                 data.tile = this;
                 data.direction = direction;
             }
 
+            oldBlock.onBlockReplaced(this, oldData);
             block.onBlockBuild(this);
         }
     }
