@@ -11,7 +11,7 @@ import fr.poulpogaz.run.factory.item.Item;
 import static fr.poulpogaz.run.Utils.loadAnimation;
 import static fr.poulpogaz.run.Variables.*;
 
-public class ConveyorBlock extends Block implements ItemConsumer {
+public class ConveyorBlock extends Block implements ItemConsumer, IConveyorBlock {
 
     private TextureRegion[] straight;
     private TextureRegion[] turn;
@@ -19,7 +19,6 @@ public class ConveyorBlock extends Block implements ItemConsumer {
 
     public ConveyorBlock(String name) {
         super(name);
-        canBeRotated = true;
     }
 
     @Override
@@ -74,11 +73,6 @@ public class ConveyorBlock extends Block implements ItemConsumer {
     }
 
     @Override
-    public void tick(BlockData data) {
-        Data d = (Data) data;
-    }
-
-    @Override
     public void onBlockBuild(Tile tile) {
         ConveyorManager.newConveyor(tile);
     }
@@ -92,8 +86,63 @@ public class ConveyorBlock extends Block implements ItemConsumer {
     /**
      * speed of 1: items move by 1 pixel every tick
      */
+    @Override
     public float speed() {
         return 2f;
+    }
+
+    @Override
+    public int inputCount(ConveyorData conveyor) {
+        return 3;
+    }
+
+    @Override
+    public int outputCount(ConveyorData conveyor) {
+        return 1;
+    }
+
+    @Override
+    public ConveyorManager.ConveyorSection createNewSection(Tile conveyor) {
+        return new ConveyorManager.ConveyorSection(conveyor);
+    }
+
+    @Override
+    public boolean canTakeItemFrom(RelativeDirection inputPos) {
+        return inputPos != RelativeDirection.FACING;
+    }
+
+    public boolean canOutputTo(RelativeDirection outputPos) {
+        return outputPos == RelativeDirection.FACING;
+    }
+
+    @Override
+    public Connection canConnectWith(ConveyorData block, Direction direction) {
+        Tile adj = block.adjacent(direction);
+        if (adj == null) {
+            return null;
+        }
+
+        Block adjB = adj.getBlock();
+        if (!adjB.isConveyor()) {
+            return null;
+        }
+        IConveyorBlock adjConv = (IConveyorBlock) adjB;
+        ConveyorData adjData = (ConveyorData) adj.getBlockData();
+
+        if (block.direction == direction) {
+            if (adjConv.canTakeItemFrom(adjData.direction, direction.opposite())) {
+                return Connection.OUTPUT;
+            }
+        } else if (adjConv.canOutputTo(adjData.direction, direction.opposite())) {
+            return Connection.INPUT;
+        }
+
+        return null;
+    }
+
+    @Override
+    public boolean forceOutput(RelativeDirection dir) {
+        return dir == RelativeDirection.FACING;
     }
 
     @Override
@@ -108,12 +157,17 @@ public class ConveyorBlock extends Block implements ItemConsumer {
 
     @Override
     public boolean acceptItem(Tile tile, Item item) {
-        return ((Data) tile.getBlockData()).section.acceptItem(item);
+        return ((Data) tile.getBlockData()).outputSection.acceptItem(item);
     }
 
     @Override
     public void passItem(Tile tile, Item item) {
-        ((Data) tile.getBlockData()).section.passItem(item);
+        ((Data) tile.getBlockData()).outputSection.passItem(item);
+    }
+
+    @Override
+    public boolean canBeRotated() {
+        return true;
     }
 
     @Override
@@ -121,16 +175,12 @@ public class ConveyorBlock extends Block implements ItemConsumer {
         return true;
     }
 
-    @Override
-    public boolean isUpdatable() {
-        return true;
-    }
-
     public static class Data extends ConveyorData {
 
-        public final ConveyorBlock block;
 
-        private int[] priorities = {0, 1, 2};
+        public final ConveyorBlock block;
+        private final int[] priorities = {0, 1, 2};
+        private ConveyorManager.ConveyorSection outputSection;
 
         public Data(ConveyorBlock block) {
             this.block = block;
@@ -139,16 +189,6 @@ public class ConveyorBlock extends Block implements ItemConsumer {
         @Override
         public float speed() {
             return block.speed();
-        }
-
-        @Override
-        public int inputCount() {
-            return 0;
-        }
-
-        @Override
-        public int outputCount() {
-            return 1;
         }
 
         @Override
@@ -180,8 +220,26 @@ public class ConveyorBlock extends Block implements ItemConsumer {
         }
 
         @Override
-        public void updateOutputPriority() {
+        public void updateOutputPriority(int attempt) {
 
+        }
+
+        @Override
+        public ConveyorManager.ConveyorSection conveyorSection(RelativeDirection direction) {
+            if (direction == RelativeDirection.FACING || !outputSection.hasParent()) {
+                return outputSection;
+            } else {
+                return outputSection.getParent(direction);
+            }
+        }
+
+        @Override
+        public void setConveyorSection(RelativeDirection direction, ConveyorManager.ConveyorSection section) {
+            if (direction != RelativeDirection.FACING) {
+                throw new IllegalStateException();
+            }
+
+            outputSection = section;
         }
     }
 }

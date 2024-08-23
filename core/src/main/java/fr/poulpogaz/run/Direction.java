@@ -61,4 +61,8 @@ public enum Direction {
             v.x * dy + v.y * dx
         );
     }
+
+    public RelativeDirection relativeTo(Direction reference) {
+        return RelativeDirection.relative(reference, this);
+    }
 }

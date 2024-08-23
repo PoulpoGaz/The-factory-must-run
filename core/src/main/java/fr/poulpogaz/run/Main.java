@@ -41,9 +41,6 @@ public class Main extends Game {
         batch = new SpriteBatch();
 
         font = assetManager.get("textures/font.fnt");
-        font.getRegion().getTexture()
-            .setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
-
         atlas = assetManager.get("textures/map/map.atlas");
 
         // load content

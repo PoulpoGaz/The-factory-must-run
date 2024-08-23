@@ -12,8 +12,6 @@ import static fr.poulpogaz.run.Variables.batch;
 
 public abstract class Block extends Content {
 
-    protected boolean canBeRotated;
-
     protected TextureRegion region;
 
     public Block(String name) {
@@ -28,7 +26,7 @@ public abstract class Block extends Content {
     public void drawBuildPlan(float x, float y, Direction direction) {
         float color = batch.getPackedColor();
         batch.setColor(1, 1, 1, 0.5f);
-        Utils.draw(region, x, y, canBeRotated ? direction.angle : 0);
+        Utils.draw(region, x, y, canBeRotated() ? direction.angle : 0);
         batch.setPackedColor(color);
     }
 
@@ -65,7 +63,7 @@ public abstract class Block extends Content {
     public abstract int height();
 
     public boolean canBeRotated() {
-        return canBeRotated;
+        return false;
     }
 
     // true if data is ConveyorData

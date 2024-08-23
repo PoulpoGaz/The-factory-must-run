@@ -230,9 +230,9 @@ unloading_conveyor
   index: 8
 gear
   rotate: false
-  xy: 784, 40
-  size: 12, 12
-  orig: 12, 12
+  xy: 2, 2
+  size: 16, 16
+  orig: 16, 16
   offset: 0, 0
   index: -1
 generator
@@ -251,7 +251,7 @@ ground
   index: -1
 iron_plate
   rotate: false
-  xy: 2, 2
+  xy: 818, 104
   size: 16, 16
   orig: 16, 16
   offset: 0, 0
@@ -265,7 +265,7 @@ machine
   index: -1
 pipe
   rotate: false
-  xy: 818, 104
+  xy: 784, 36
   size: 16, 16
   orig: 16, 16
   offset: 0, 0
