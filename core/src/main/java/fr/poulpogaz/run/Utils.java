@@ -117,4 +117,16 @@ public class Utils {
     public static TextureRegion[] loadAnimation(String name) {
         return atlas.findRegions(name).toArray();
     }
+
+
+    public static <T> int count(T[] array, T element) {
+        int n = 0;
+        for (T t : array) {
+            if (t == element) {
+                n++;
+            }
+        }
+
+        return n;
+    }
 }

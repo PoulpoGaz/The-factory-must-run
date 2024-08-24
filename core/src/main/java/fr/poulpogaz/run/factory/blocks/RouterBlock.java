@@ -1,6 +1,5 @@
 package fr.poulpogaz.run.factory.blocks;
 
-import com.badlogic.gdx.Graphics;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import fr.poulpogaz.run.Direction;
 import fr.poulpogaz.run.RelativeDirection;
@@ -9,6 +8,9 @@ import fr.poulpogaz.run.factory.ConveyorManager;
 import fr.poulpogaz.run.factory.Tile;
 import fr.poulpogaz.run.factory.item.Item;
 
+import java.util.Arrays;
+
+import static fr.poulpogaz.run.RelativeDirection.*;
 import static fr.poulpogaz.run.Utils.loadAnimation;
 import static fr.poulpogaz.run.Variables.HALF_TILE_SIZE;
 import static fr.poulpogaz.run.Variables.factory;
@@ -38,7 +40,24 @@ public class RouterBlock extends Block implements IConveyorBlock {
 
     @Override
     public void onBlockBuild(Tile tile) {
-        ConveyorManager.newConveyor(tile);
+        ConveyorData data = (ConveyorData) tile.getBlockData();
+        Connection[] connections = connections(data);
+
+        ConveyorManager.ConveyorSection parent;
+        if (connections[BEHIND.ordinal()] == Connection.INPUT) {
+            parent = ConveyorManager.adjacentSection(data, BEHIND);
+            parent.growEnd(data, HALF_TILE_SIZE);
+        } else {
+            parent = new ConveyorManager.ConveyorSection()
+                .init(data, BEHIND, true);
+        }
+
+        data.setConveyorSection(BEHIND, parent);
+
+        for (int i = 0; i < 3; i++) {
+            ConveyorManager.ConveyorSection s = ConveyorManager.setupOutput(data, connections, values[i]);
+            s.addParent(parent, BEHIND, values[i]);
+        }
     }
 
     /**
@@ -50,61 +69,15 @@ public class RouterBlock extends Block implements IConveyorBlock {
     }
 
     @Override
-    public int inputCount(ConveyorData conveyor) {
-        return 1;
-    }
+    public boolean passItem(Tile tile, Direction input, Item item) {
+        Data data = (Data) tile.getBlockData();
 
-    @Override
-    public int outputCount(ConveyorData conveyor) {
-        return 3;
-    }
-
-    @Override
-    public ConveyorManager.ConveyorSection createNewSection(Tile conveyor) {
-        ConveyorData data = (ConveyorData) conveyor.getBlockData();
-
-        ConveyorManager.ConveyorSection start = setupSection(conveyor);
-        start.firstBlock.setConveyorSection(RelativeDirection.BEHIND, start);
-        start.graph = createGraph(conveyor.drawX() + HALF_TILE_SIZE - data.direction.dx * HALF_TILE_SIZE,
-                                  conveyor.drawY() + HALF_TILE_SIZE - data.direction.dy * HALF_TILE_SIZE,
-                                  data.direction);
-        start.childrenCount = 3;
-
-        for (RelativeDirection d : RelativeDirection.values) {
-            if (d == RelativeDirection.BEHIND) {
-                continue;
-            }
-
-            ConveyorManager.ConveyorSection child = setupSection(conveyor);
-            child.graph = createGraph(conveyor.drawX() + HALF_TILE_SIZE, conveyor.drawY() + HALF_TILE_SIZE, d.absolute(data.direction));
-            child.parentCount = 1;
-            child.parents[RelativeDirection.BEHIND.ordinal() - 1] = start;
-            start.children[d.ordinal()] = child;
+        if (data.direction == input) {
+            data.inputSection.passItem(item);
+            return true;
         }
 
-        return start;
-    }
-
-    private ConveyorManager.ConveyorSection setupSection(Tile conveyor) {
-        ConveyorManager.ConveyorSection section = new ConveyorManager.ConveyorSection();
-        section.firstBlock = (ConveyorData) conveyor.getBlockData();
-        section.endBlock = section.firstBlock;
-        section.availableLength = HALF_TILE_SIZE;
-        section.length = HALF_TILE_SIZE;
-
-        return section;
-    }
-
-    private ConveyorManager.BlockGraph createGraph(int x, int y, Direction dir) {
-        ConveyorManager.BlockGraph g = new ConveyorManager.BlockGraph();
-        g.x = x;
-        g.y = y;
-        g.start = new ConveyorManager.BlockNode();
-        g.end = g.start;
-        g.start.length = HALF_TILE_SIZE;
-        g.start.direction = dir;
-
-        return g;
+        return false;
     }
 
     @Override
@@ -136,10 +109,20 @@ public class RouterBlock extends Block implements IConveyorBlock {
             if (adjConv.canOutputTo(adjData.direction, direction.opposite())) {
                 return Connection.INPUT;
             }
-        } else {// if (adjConv.canTakeItemFrom(adjData.direction, direction.opposite())) {
+        } else if (adjConv.canTakeItemFrom(adjData.direction, direction.opposite())) {
             return Connection.OUTPUT;
         }
 
+        return null;
+    }
+
+    @Override
+    public Connection forceSection(ConveyorData block, Connection[] connections, RelativeDirection dir) {
+        return dir == RelativeDirection.BEHIND ? Connection.INPUT : Connection.OUTPUT;
+    }
+
+    @Override
+    public ConveyorManager.ConveyorSection newInput(ConveyorData block, RelativeDirection inputPos) {
         return null;
     }
 
@@ -175,12 +158,10 @@ public class RouterBlock extends Block implements IConveyorBlock {
 
     public static class Data extends ConveyorData {
 
-        private static final int[] inputPrio = new int[3];
-
         public final RouterBlock block;
         private ConveyorManager.ConveyorSection inputSection;
 
-        private static final int[] outputPrio = {0, 1, 2};
+        private final int[] outputPrio = {0, 1, 2};
 
         public Data(RouterBlock block) {
             this.block = block;
@@ -192,8 +173,8 @@ public class RouterBlock extends Block implements IConveyorBlock {
         }
 
         @Override
-        public int[] inputPriorities() {
-            return inputPrio;
+        public int inputPriority(Item item, RelativeDirection dir) {
+            return 0;
         }
 
         @Override
@@ -208,10 +189,16 @@ public class RouterBlock extends Block implements IConveyorBlock {
 
         @Override
         public void updateOutputPriority(int attempt) {
-            int o = outputPrio[0];
-            outputPrio[0] = outputPrio[1];
-            outputPrio[1] = outputPrio[2];
-            outputPrio[2] = o;
+            if (attempt == 0) {
+                int o = outputPrio[0];
+                outputPrio[0] = outputPrio[1];
+                outputPrio[1] = outputPrio[2];
+                outputPrio[2] = o;
+            } else if (attempt == 1) {
+                int o = outputPrio[1];
+                outputPrio[1] = outputPrio[2];
+                outputPrio[2] = o;
+            }
         }
 
         @Override
@@ -223,12 +210,6 @@ public class RouterBlock extends Block implements IConveyorBlock {
         public void setConveyorSection(RelativeDirection direction, ConveyorManager.ConveyorSection section) {
             if (direction == RelativeDirection.BEHIND) {
                 this.inputSection = section;
-            } else {
-                this.inputSection = section.getChild(direction);
-
-                if (inputSection == null) {
-                    inputSection = section;
-                }
             }
         }
     }

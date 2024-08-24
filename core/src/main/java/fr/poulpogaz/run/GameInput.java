@@ -16,7 +16,7 @@ public class GameInput extends BasicInputProcessor {
     public int tileY;
 
     public Block selectedBlock;
-    public Direction selectedBlockDirection = Direction.LEFT;
+    public Direction selectedBlockDirection = Direction.RIGHT;
 
     public boolean pause = false;
     public int simulateTicks = 0;

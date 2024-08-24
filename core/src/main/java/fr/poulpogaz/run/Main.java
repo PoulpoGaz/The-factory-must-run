@@ -54,7 +54,11 @@ public class Main extends Game {
     public void render() {
         super.render();
 
-        if (Gdx.input.isKeyJustPressed(Input.Keys.F2)){
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F1)){
+            debug = !debug;
+        }
+
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F2)) {
             boolean fullScreen = Gdx.graphics.isFullscreen();
             Graphics.DisplayMode currentMode = Gdx.graphics.getDisplayMode();
 

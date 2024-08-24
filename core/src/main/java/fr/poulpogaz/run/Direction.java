@@ -4,22 +4,22 @@ import com.badlogic.gdx.math.Vector2;
 
 public enum Direction {
 
-    LEFT(0, 1, 0),
+    RIGHT(0, 1, 0),
     UP(90, 0, 1),
-    RIGHT(180, -1, 0),
+    LEFT(180, -1, 0),
     DOWN(270, 0, -1);
 
 
     static {
-        LEFT.next = UP;
-        UP.next = RIGHT;
-        RIGHT.next = DOWN;
-        DOWN.next = LEFT;
+        LEFT.previous = UP;
+        UP.previous = RIGHT;
+        RIGHT.previous = DOWN;
+        DOWN.previous = LEFT;
 
-        LEFT.previous = DOWN;
-        UP.previous = LEFT;
-        RIGHT.previous = UP;
-        DOWN.previous = RIGHT;
+        LEFT.next = DOWN;
+        UP.next = LEFT;
+        RIGHT.next = UP;
+        DOWN.next = RIGHT;
 
         LEFT.opposite = RIGHT;
         UP.opposite = DOWN;

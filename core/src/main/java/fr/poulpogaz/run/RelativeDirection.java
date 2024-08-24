@@ -1,6 +1,5 @@
 package fr.poulpogaz.run;
 
-import fr.poulpogaz.run.factory.blocks.Block;
 import fr.poulpogaz.run.factory.blocks.BlockData;
 
 public enum RelativeDirection implements ToAbsolute {

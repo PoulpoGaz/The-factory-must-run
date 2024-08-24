@@ -21,4 +21,6 @@ public class Variables {
     public static GameInput input;
     public static Camera camera;
     public static Factory factory;
+
+    public static boolean debug = true;
 }

@@ -9,9 +9,10 @@ public abstract class ConveyorData extends BlockData {
     public abstract float speed();
 
     /**
-     * @return map in this order: left, right and finally behind to a priority (0 to 2)
+     * take an item from where ?
+     * best the smallest
      */
-    public abstract int[] inputPriorities();
+    public abstract int inputPriority(Item item, RelativeDirection dir);
 
     public abstract void updateInputPriority(RelativeDirection choice);
 
