@@ -20,7 +20,7 @@ public class AirBlock extends Block {
     }
 
     @Override
-    public void drawBuildPlan(float x, float y, Direction direction) {
+    public void drawBuildPlan(float x, float y, Direction direction, boolean flipped) {
 
     }
 

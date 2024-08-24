@@ -63,7 +63,6 @@ public class GeneratorBlock extends Block {
         public Data() {
             this.i = count;
             count++;
-            System.out.println(i);
         }
     }
 }

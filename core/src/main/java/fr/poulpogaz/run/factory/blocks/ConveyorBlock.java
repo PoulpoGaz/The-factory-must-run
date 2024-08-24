@@ -94,8 +94,59 @@ public class ConveyorBlock extends Block implements IConveyorBlock {
     }
 
     @Override
+    public void onBlockDestroyed(Tile tile) {
+        Data data = (Data) tile.getBlockData();
+        Connection[] connections = connections(data);
+
+        ConveyorManager.ConveyorSection out = data.outputSection;
+        boolean start = out.isSectionStart(data);
+
+        int link = Utils.count(connections, null);
+
+        if (link == 4) {
+            out.removeSection();
+        } else if (link == 3 || link == 2 && (!out.hasParent() || !start)) {
+            // turn or straight
+
+            if (connections[FACING.ordinal()] == Connection.OUTPUT && !start) {
+                ConveyorManager.ConveyorSection before = out.splitAt(data, false);
+                before.shrinkEnd(HALF_TILE_SIZE);
+                out.shrinkStart(HALF_TILE_SIZE);
+
+                ConveyorData facingData = (ConveyorData) data.adjacentRelative(FACING).getBlockData();
+                IConveyorBlock facingBlock = (IConveyorBlock) facingData.tile.getBlock();
+                facingBlock.inputRemoved(facingData, relativePos(facingData, data));
+            } else if (start) {
+                out.shrinkStart(TILE_SIZE);
+
+                ConveyorData facingData = (ConveyorData) data.adjacentRelative(FACING).getBlockData();
+                IConveyorBlock facingBlock = (IConveyorBlock) facingData.tile.getBlock();
+                facingBlock.inputRemoved(facingData, relativePos(facingData, data));
+            } else {
+                out.shrinkEnd(TILE_SIZE);
+            }
+        } else {
+            for (int i = 0; i < out.parents.length; i++) {
+                ConveyorManager.ConveyorSection parent = out.parents[i];
+
+                if (parent != null) {
+                    parent.selectedInput = false;
+                    parent.shrinkEnd(HALF_TILE_SIZE);
+                    out.removeParent(parent, values[i + 1], FACING);
+                }
+            }
+
+            if (out.graph.length == HALF_TILE_SIZE) {
+                out.removeSection();
+            } else {
+                out.shrinkStart(HALF_TILE_SIZE);
+            }
+        }
+    }
+
+    @Override
     public Data createData(Tile tile) {
-        return new Data((ConveyorBlock) tile.getBlock());
+        return new Data(this);
     }
 
 
@@ -121,11 +172,12 @@ public class ConveyorBlock extends Block implements IConveyorBlock {
     }
 
     @Override
-    public boolean canTakeItemFrom(RelativeDirection inputPos) {
+    public boolean canTakeItemFrom(ConveyorData data, RelativeDirection inputPos) {
         return inputPos != RelativeDirection.FACING;
     }
 
-    public boolean canOutputTo(RelativeDirection outputPos) {
+    @Override
+    public boolean canOutputTo(ConveyorData data, RelativeDirection outputPos) {
         return outputPos == RelativeDirection.FACING;
     }
 
@@ -144,10 +196,10 @@ public class ConveyorBlock extends Block implements IConveyorBlock {
         ConveyorData adjData = (ConveyorData) adj.getBlockData();
 
         if (block.direction == direction) {
-            if (adjConv.canTakeItemFrom(adjData.direction, direction.opposite())) {
+            if (adjConv.canTakeItemFrom(adjData, adjData.direction, direction.opposite())) {
                 return Connection.OUTPUT;
             }
-        } else if (adjConv.canOutputTo(adjData.direction, direction.opposite())) {
+        } else if (adjConv.canOutputTo(adjData, adjData.direction, direction.opposite())) {
             return Connection.INPUT;
         }
 
@@ -155,26 +207,15 @@ public class ConveyorBlock extends Block implements IConveyorBlock {
     }
 
     @Override
-    public Connection forceSection(ConveyorData block, Connection[] connections, RelativeDirection dir) {
-        if (dir == RelativeDirection.FACING) {
-            return Connection.OUTPUT;
-        } else if (dir == BEHIND && connections[LEFT.ordinal()] == null && connections[RIGHT.ordinal()] == null) {
-            return Connection.INPUT;
-        } else {
-            return null;
-        }
-    }
-
-    @Override
-    public ConveyorManager.ConveyorSection newInput(ConveyorData data, RelativeDirection inputPos) {
-        Data d = (Data) data;
+    public ConveyorManager.ConveyorSection newInput(ConveyorData block, RelativeDirection inputPos) {
+        Data d = (Data) block;
         ConveyorManager.ConveyorSection out = d.outputSection;
 
-        if (!out.isSectionStart(data)) {
-            out.splitAt(data);
+        if (!out.isSectionStart(block)) {
+            out.splitAt(block, true);
         }
 
-        Direction dir = inputPos.absolute(data.direction);
+        Direction dir = inputPos.absolute(block.direction);
 
         if (out.parentCount == 0) {
             out.graph.growStart(-HALF_TILE_SIZE);
@@ -183,19 +224,38 @@ public class ConveyorBlock extends Block implements IConveyorBlock {
             return out;
         } else {
             ConveyorManager.ConveyorSection sec = new ConveyorManager.ConveyorSection();
-            sec.firstBlock = data;
-            sec.endBlock = data;
+            sec.firstBlock = block;
+            sec.endBlock = block;
             sec.graph = new ConveyorManager.BlockGraph()
-                .init(data.tile, dir, HALF_TILE_SIZE, dir.opposite());
+                .init(block.tile, dir, HALF_TILE_SIZE, dir.opposite());
             sec.availableLength = sec.graph.length;
 
-            ConveyorManager.ConveyorSection child = ((Data) data).outputSection;
+            ConveyorManager.ConveyorSection child = ((Data) block).outputSection;
             child.parentCount++;
             child.parents[inputPos.ordinal() - 1] = sec;
             sec.childrenCount++;
             sec.children[FACING.ordinal()] = child;
 
             return sec;
+        }
+    }
+
+    @Override
+    public void inputRemoved(ConveyorData block, RelativeDirection inputPos) {
+        Data d = (Data) block;
+        ConveyorManager.ConveyorSection sec = d.outputSection;
+
+        if (sec.parentCount >= 2) {
+            ConveyorManager.ConveyorSection parent = sec.getParent(inputPos);
+            sec.removeParent(parent, inputPos, FACING);
+            parent.removeSection();
+
+            if (sec.parentCount == 1) {
+                ConveyorManager.merge(sec.getUniqueParent(), sec);
+            }
+        } else if (inputPos != BEHIND) {
+            sec.graph.shrinkStart(HALF_TILE_SIZE);
+            sec.graph.growStart(HALF_TILE_SIZE);
         }
     }
 

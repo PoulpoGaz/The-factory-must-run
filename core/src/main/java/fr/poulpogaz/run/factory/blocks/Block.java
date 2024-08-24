@@ -23,7 +23,7 @@ public abstract class Block extends Content {
         region = atlas.findRegion(name);
     }
 
-    public void drawBuildPlan(float x, float y, Direction direction) {
+    public void drawBuildPlan(float x, float y, Direction direction, boolean flipped) {
         float color = batch.getPackedColor();
         batch.setColor(1, 1, 1, 0.5f);
         Utils.draw(region, x, y, canBeRotated() ? direction.angle : 0);
@@ -46,10 +46,6 @@ public abstract class Block extends Content {
 
     }
 
-    public void onBlockReplaced(Tile tile, BlockData oldData) {
-
-    }
-
     public void onBlockDestroyed(Tile tile) {
 
     }
@@ -63,6 +59,10 @@ public abstract class Block extends Content {
     public abstract int height();
 
     public boolean canBeRotated() {
+        return false;
+    }
+
+    public boolean canBeFlipped() {
         return false;
     }
 

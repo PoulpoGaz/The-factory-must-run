@@ -29,7 +29,7 @@ public class Factory {
                 tiles[i] = new Tile(x, y);
 
                 if (y == 0 || y == height - 1 || x == 0 || x == width - 1) {
-                    tiles[i].setBlock(Blocks.WALL, Direction.LEFT);
+                    tiles[i].setBlock(Blocks.WALL, Direction.LEFT, false);
                 }
 
                 i++;
@@ -52,14 +52,18 @@ public class Factory {
     }
 
     public void setBlock(int x, int y, Block selectedBlock) {
-        setBlock(x, y, selectedBlock, Direction.LEFT);
+        setBlock(x, y, selectedBlock, Direction.LEFT, false);
     }
 
-    public void setBlock(int x, int y, Block selectedBlock, Direction direction) {
+    public void setBlock(int x, int y, Block selectedBlock, Direction direction, boolean flipped) {
         if (direction == null) {
             direction = Direction.LEFT;
         }
-        getTile(x, y).setBlock(selectedBlock, direction);
+        getTile(x, y).setBlock(selectedBlock, direction, flipped);
+    }
+
+    public void removeBlock(int x, int y) {
+        getTile(x, y).setBlock(Blocks.AIR, null, false);
     }
 
     public Tile getTile(int x, int y) {

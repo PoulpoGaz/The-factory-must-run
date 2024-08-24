@@ -25,16 +25,16 @@ public interface IConveyorBlock {
     /**
      * @param inputPos input position relative to conveyor direction
      */
-    boolean canTakeItemFrom(RelativeDirection inputPos);
+    boolean canTakeItemFrom(ConveyorData data, RelativeDirection inputPos);
 
-    default boolean canTakeItemFrom(Direction blockDirection, Direction inputPos) {
-        return canTakeItemFrom(relative(blockDirection, inputPos));
+    default boolean canTakeItemFrom(ConveyorData data, Direction blockDirection, Direction inputPos) {
+        return canTakeItemFrom(data, relative(blockDirection, inputPos));
     }
 
-    boolean canOutputTo(RelativeDirection outputPos);
+    boolean canOutputTo(ConveyorData data, RelativeDirection outputPos);
 
-    default boolean canOutputTo(Direction blockDirection, Direction inputPos) {
-        return canOutputTo(relative(blockDirection, inputPos));
+    default boolean canOutputTo(ConveyorData data, Direction blockDirection, Direction inputPos) {
+        return canOutputTo(data, relative(blockDirection, inputPos));
     }
 
     Connection canConnectWith(ConveyorData block, Direction direction);
@@ -51,11 +51,9 @@ public interface IConveyorBlock {
         out[BEHIND.ordinal()] = canConnectWith(block, block.direction.opposite());
     }
 
-    default Connection forceSection(ConveyorData block, Connection[] connections, RelativeDirection dir) {
-        return null;
-    }
-
     ConveyorManager.ConveyorSection newInput(ConveyorData block, RelativeDirection inputPos);
+
+    void inputRemoved(ConveyorData block, RelativeDirection inputPos);
 
     ConveyorData createData(Tile tile);
 }

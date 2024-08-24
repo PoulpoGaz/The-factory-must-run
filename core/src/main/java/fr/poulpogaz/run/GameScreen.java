@@ -56,6 +56,12 @@ public class GameScreen implements Screen {
         });
 
         Button undergroundConveyor = new Button(new Image(atlas.findRegion("underground_conveyor_input")), skin);
+        undergroundConveyor.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                input.select(Blocks.UNDERGROUND_CONVEYOR);
+            }
+        });
 
         Button wall = new Button(new Image(atlas.findRegion("wall")), skin);
         wall.addListener(new ChangeListener() {
@@ -136,7 +142,8 @@ public class GameScreen implements Screen {
         if (input.selectedBlock != null) {
             input.selectedBlock.drawBuildPlan(input.tileX * TILE_SIZE,
                                               input.tileY * TILE_SIZE,
-                                              input.selectedBlockDirection);
+                                              input.selectedBlockDirection,
+                                              input.flipped);
         }
 
         batch.end();

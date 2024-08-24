@@ -8,9 +8,8 @@ import fr.poulpogaz.run.factory.ConveyorManager;
 import fr.poulpogaz.run.factory.Tile;
 import fr.poulpogaz.run.factory.item.Item;
 
-import java.util.Arrays;
-
 import static fr.poulpogaz.run.RelativeDirection.*;
+import static fr.poulpogaz.run.RelativeDirection.relativePos;
 import static fr.poulpogaz.run.Utils.loadAnimation;
 import static fr.poulpogaz.run.Variables.HALF_TILE_SIZE;
 import static fr.poulpogaz.run.Variables.factory;
@@ -60,6 +59,34 @@ public class RouterBlock extends Block implements IConveyorBlock {
         }
     }
 
+    @Override
+    public void onBlockDestroyed(Tile tile) {
+        Data data = (Data) tile.getBlockData();
+
+        ConveyorManager.ConveyorSection input = data.inputSection;
+        for (int i = 0; i < 3; i++) {
+            ConveyorManager.ConveyorSection sec = data.inputSection.getChild(values[i]);
+            sec.removeParent(input, BEHIND, values[i]);
+
+            if (sec.graph.length == HALF_TILE_SIZE) {
+                sec.removeSection();
+            } else {
+                sec.shrinkStart(HALF_TILE_SIZE);
+
+                ConveyorData adjData = (ConveyorData) data.adjacentRelative(values[i]).getBlockData();
+                IConveyorBlock adjBlock = (IConveyorBlock) adjData.tile.getBlock();
+                adjBlock.inputRemoved(adjData, relativePos(adjData, data));
+            }
+        }
+
+        input.selectedInput = false;
+        if (input.graph.length == HALF_TILE_SIZE) {
+            input.removeSection();
+        } else {
+            input.shrinkEnd(HALF_TILE_SIZE);
+        }
+    }
+
     /**
      * speed of 1: items move by 1 pixel every tick
      */
@@ -81,12 +108,12 @@ public class RouterBlock extends Block implements IConveyorBlock {
     }
 
     @Override
-    public boolean canTakeItemFrom(RelativeDirection inputPos) {
+    public boolean canTakeItemFrom(ConveyorData data, RelativeDirection inputPos) {
         return inputPos == RelativeDirection.BEHIND;
     }
 
     @Override
-    public boolean canOutputTo(RelativeDirection outputPos) {
+    public boolean canOutputTo(ConveyorData data, RelativeDirection outputPos) {
         return outputPos != RelativeDirection.BEHIND;
     }
 
@@ -106,19 +133,14 @@ public class RouterBlock extends Block implements IConveyorBlock {
 
         if (block.direction == direction.opposite()) {
             // behind
-            if (adjConv.canOutputTo(adjData.direction, direction.opposite())) {
+            if (adjConv.canOutputTo(adjData, adjData.direction, direction.opposite())) {
                 return Connection.INPUT;
             }
-        } else if (adjConv.canTakeItemFrom(adjData.direction, direction.opposite())) {
+        } else if (adjConv.canTakeItemFrom(adjData, adjData.direction, direction.opposite())) {
             return Connection.OUTPUT;
         }
 
         return null;
-    }
-
-    @Override
-    public Connection forceSection(ConveyorData block, Connection[] connections, RelativeDirection dir) {
-        return dir == RelativeDirection.BEHIND ? Connection.INPUT : Connection.OUTPUT;
     }
 
     @Override
@@ -127,8 +149,13 @@ public class RouterBlock extends Block implements IConveyorBlock {
     }
 
     @Override
+    public void inputRemoved(ConveyorData block, RelativeDirection inputPos) {
+
+    }
+
+    @Override
     public Data createData(Tile tile) {
-        return new Data((RouterBlock) tile.getBlock());
+        return new Data(this);
     }
 
     @Override

@@ -251,7 +251,7 @@ ground
   index: -1
 iron_plate
   rotate: false
-  xy: 818, 104
+  xy: 716, 70
   size: 16, 16
   orig: 16, 16
   offset: 0, 0
@@ -265,7 +265,7 @@ machine
   index: -1
 pipe
   rotate: false
-  xy: 784, 36
+  xy: 750, 104
   size: 16, 16
   orig: 16, 16
   offset: 0, 0
@@ -382,254 +382,149 @@ underground_conveyor_input
   orig: 32, 32
   offset: 0, 0
   index: 8
-underground_conveyor_input_mask
+underground_conveyor_mask
   rotate: false
   xy: 478, 54
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: -1
+underground_conveyor_output
+  rotate: false
+  xy: 512, 88
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 1
-underground_conveyor_output_mask
+underground_conveyor_output
   rotate: false
-  xy: 478, 54
-  size: 32, 32
-  orig: 32, 32
-  offset: 0, 0
-  index: 8
-underground_conveyor_input_mask
-  rotate: false
-  xy: 512, 88
+  xy: 478, 20
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 2
-underground_conveyor_output_mask
+underground_conveyor_output
   rotate: false
-  xy: 512, 88
-  size: 32, 32
-  orig: 32, 32
-  offset: 0, 0
-  index: 7
-underground_conveyor_input_mask
-  rotate: false
-  xy: 478, 20
+  xy: 512, 54
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 3
-underground_conveyor_output_mask
-  rotate: false
-  xy: 478, 20
-  size: 32, 32
-  orig: 32, 32
-  offset: 0, 0
-  index: 6
-underground_conveyor_input_mask
-  rotate: false
-  xy: 512, 54
-  size: 32, 32
-  orig: 32, 32
-  offset: 0, 0
-  index: 4
-underground_conveyor_output_mask
-  rotate: false
-  xy: 512, 54
-  size: 32, 32
-  orig: 32, 32
-  offset: 0, 0
-  index: 5
-underground_conveyor_input_mask
-  rotate: false
-  xy: 546, 88
-  size: 32, 32
-  orig: 32, 32
-  offset: 0, 0
-  index: 5
-underground_conveyor_output_mask
+underground_conveyor_output
   rotate: false
   xy: 546, 88
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 4
-underground_conveyor_input_mask
+underground_conveyor_output
   rotate: false
   xy: 512, 20
+  size: 32, 32
+  orig: 32, 32
+  offset: 0, 0
+  index: 5
+underground_conveyor_output
+  rotate: false
+  xy: 546, 54
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 6
-underground_conveyor_output_mask
+underground_conveyor_output
   rotate: false
-  xy: 512, 20
-  size: 32, 32
-  orig: 32, 32
-  offset: 0, 0
-  index: 3
-underground_conveyor_input_mask
-  rotate: false
-  xy: 546, 54
+  xy: 580, 88
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: 7
-underground_conveyor_output_mask
-  rotate: false
-  xy: 546, 54
-  size: 32, 32
-  orig: 32, 32
-  offset: 0, 0
-  index: 2
-underground_conveyor_input_mask
-  rotate: false
-  xy: 580, 88
-  size: 32, 32
-  orig: 32, 32
-  offset: 0, 0
-  index: 8
-underground_conveyor_output_mask
-  rotate: false
-  xy: 580, 88
-  size: 32, 32
-  orig: 32, 32
-  offset: 0, 0
-  index: 1
 underground_conveyor_output
   rotate: false
   xy: 546, 20
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
-  index: 1
-underground_conveyor_output
-  rotate: false
-  xy: 580, 54
-  size: 32, 32
-  orig: 32, 32
-  offset: 0, 0
-  index: 2
-underground_conveyor_output
-  rotate: false
-  xy: 614, 88
-  size: 32, 32
-  orig: 32, 32
-  offset: 0, 0
-  index: 3
-underground_conveyor_output
-  rotate: false
-  xy: 580, 20
-  size: 32, 32
-  orig: 32, 32
-  offset: 0, 0
-  index: 4
-underground_conveyor_output
-  rotate: false
-  xy: 614, 54
-  size: 32, 32
-  orig: 32, 32
-  offset: 0, 0
-  index: 5
-underground_conveyor_output
-  rotate: false
-  xy: 648, 88
-  size: 32, 32
-  orig: 32, 32
-  offset: 0, 0
-  index: 6
-underground_conveyor_output
-  rotate: false
-  xy: 614, 20
-  size: 32, 32
-  orig: 32, 32
-  offset: 0, 0
-  index: 7
-underground_conveyor_output
-  rotate: false
-  xy: 648, 54
-  size: 32, 32
-  orig: 32, 32
-  offset: 0, 0
   index: 8
 wall
   rotate: false
-  xy: 682, 88
+  xy: 580, 54
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
 wall_down
   rotate: false
-  xy: 648, 20
+  xy: 614, 88
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
 wall_left_right
   rotate: false
-  xy: 682, 54
+  xy: 580, 20
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
 wall_right
   rotate: false
-  xy: 716, 88
+  xy: 614, 54
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
 wall_t_down
   rotate: false
-  xy: 682, 20
+  xy: 648, 88
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
 wall_t_right
   rotate: false
-  xy: 716, 54
+  xy: 614, 20
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
 wall_t_up
   rotate: false
-  xy: 750, 88
+  xy: 648, 54
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
 wall_turn_right
   rotate: false
-  xy: 716, 20
+  xy: 682, 88
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
 wall_turn_up
   rotate: false
-  xy: 750, 54
+  xy: 648, 20
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
 wall_up
   rotate: false
-  xy: 784, 88
+  xy: 682, 54
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
 wall_up_down
   rotate: false
-  xy: 750, 20
+  xy: 716, 88
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
 wall_x
   rotate: false
-  xy: 784, 54
+  xy: 682, 20
   size: 32, 32
   orig: 32, 32
   offset: 0, 0

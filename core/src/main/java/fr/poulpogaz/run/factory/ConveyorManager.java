@@ -114,7 +114,7 @@ public class ConveyorManager {
             before.graph.merge(after.graph);
             after.graph = before.graph;
 
-            sections.removeValue(before, true);
+            before.removeSection();
         }
     }
 
@@ -348,7 +348,6 @@ public class ConveyorManager {
         private void selectInput() {
             ConveyorSection best = null;
             int bestPrio = Integer.MAX_VALUE;
-            int index = -1;
             for (int i = 0; i < parents.length; i++) {
                 ConveyorSection cur = parents[i];
                 if (cur != null) {
@@ -362,7 +361,6 @@ public class ConveyorManager {
                                 || cur.firstItem.remaining == best.firstItem.remaining && prio < bestPrio) {
                             best = cur;
                             bestPrio = prio;
-                            index = i;
                         }
                     }
                 }
@@ -388,7 +386,7 @@ public class ConveyorManager {
 
             float spacing;
             if (firstNonBlockedItem == firstItem && childrenCount == 0) {
-                spacing = itemSpacing;
+                spacing = 0;
             } else if (firstNonBlockedItem == firstItem && selectedInput) {
                 spacing = Math.max(itemSpacing - sub.availableLength, 0);
             } else {
@@ -479,6 +477,26 @@ public class ConveyorManager {
 
             firstItem = prev;
             firstNonBlockedItem = prev;
+
+            return item;
+        }
+
+        private Item removeLastItem() {
+            if (lastItem == null) {
+                return null;
+            }
+
+            ItemList next = lastItem.next;
+            if (next != null) {
+                next.previous = null;
+            } else {
+                firstItem = null;
+            }
+
+            Item item = lastItem.item;
+            itemListPool.free(lastItem);
+
+            lastItem = next;
 
             return item;
         }
@@ -582,12 +600,55 @@ public class ConveyorManager {
             }
         }
 
+        public void shrinkStart(int length) {
+            firstBlock = (ConveyorData) firstBlock.adjacent(graph.start.direction)
+                                                  .getBlockData();
+            graph.shrinkStart(length);
+
+            if (lastItem != null && length > availableLength) {
+                while (length > availableLength && lastItem != null) {
+                    availableLength += lastItem.remaining;
+                    removeLastItem();
+                }
+            }
+            availableLength -= length;
+            firstNonBlockedItem = firstItem;
+        }
+
+        public void shrinkEnd(int length) {
+            graph.shrinkEnd(length);
+            endBlock = (ConveyorData) endBlock.adjacent(graph.end.direction.opposite())
+                                              .getBlockData();
+
+            if (firstItem != null) {
+                float remaining = length;
+
+                while (remaining > 0 && firstItem != null) {
+                    if (remaining > firstItem.remaining) {
+                        remaining -= firstItem.remaining;
+                        removeFirstItem();
+                    } else {
+                        firstItem.remaining -= remaining;
+                        remaining = 0;
+                    }
+                }
+
+                if (firstItem == null) {
+                    availableLength = graph.length;
+                }
+
+                firstNonBlockedItem = firstItem;
+            } else {
+                availableLength -= length;
+            }
+        }
+
         /**
          * block will be in this section
          */
-        public void splitAt(ConveyorData block) {
+        public ConveyorSection splitAt(ConveyorData block, boolean addParent) {
             if (block == firstBlock) {
-                return;
+                return null;
             }
 
             BlockFinder f = BlockFinder.instance;
@@ -610,7 +671,9 @@ public class ConveyorManager {
             // update parents
             // copy parents of this to parent
             moveParentsTo(this, parent);
-            addParent(parent);
+            if (addParent) {
+                addParent(parent);
+            }
 
             // move items and update lengths
             float cutPos = f.totalLength + HALF_TILE_SIZE;
@@ -657,6 +720,8 @@ public class ConveyorManager {
                     d.setConveyorSection(FACING, parent);
                 }
             });
+
+            return parent;
         }
 
         public void addParent(ConveyorSection section) {
@@ -698,14 +763,11 @@ public class ConveyorManager {
             parentCount++;
         }
 
-        public void removeParent(ConveyorSection section) {
-            RelativeDirection r = relativePos(firstBlock, section.endBlock);
+        public void removeParent(ConveyorSection section, RelativeDirection r, RelativeDirection rc) {
             int i = r.ordinal() - 1;
-
-            RelativeDirection rc = relativePos(section.endBlock, firstBlock);
             int ic = rc.ordinal();
 
-            if (parents[i] != null) {
+            if (parents[i] == null) {
                 throw new IllegalStateException("No parent found in direction " + r);
             }
             if (parents[i] != section) {
@@ -717,6 +779,9 @@ public class ConveyorManager {
             parentCount--;
         }
 
+        public void removeSection() {
+            sections.removeValue(this, true);
+        }
 
 
         public void blockIterator(Consumer<ConveyorData> consumer) {
@@ -955,6 +1020,46 @@ public class ConveyorManager {
         public void growEnd(int add) {
             length += add;
             end.length += add;
+        }
+
+        public void shrinkStart(int length) {
+            this.length -= length;
+            start.length -= length;
+
+            x += start.direction.dx * length;
+            y += start.direction.dy * length;
+
+            if (start.length == 0) {
+                start = start.next;
+
+                if (start != null) {
+                    start.previous.next = null;
+                    start.previous = null;
+                } else {
+                    end = null;
+                }
+            }
+        }
+
+        public void shrinkEnd(int length) {
+            this.length -= length;
+
+            while (length > 0 && end != null) {
+                if (length >= end.length) {
+                    length -= end.length;
+
+                    end = end.previous;
+                    if (end != null) {
+                        end.next.previous = null;
+                        end.next = null;
+                    } else {
+                        start = null;
+                    }
+                } else {
+                    end.length -= length;
+                    length = 0;
+                }
+            }
         }
     }
 

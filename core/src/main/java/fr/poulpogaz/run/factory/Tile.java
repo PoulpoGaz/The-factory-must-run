@@ -4,6 +4,7 @@ import fr.poulpogaz.run.Direction;
 import fr.poulpogaz.run.factory.blocks.Block;
 import fr.poulpogaz.run.factory.blocks.BlockData;
 import fr.poulpogaz.run.factory.blocks.Blocks;
+import fr.poulpogaz.run.factory.blocks.IFlipData;
 
 import static fr.poulpogaz.run.Variables.TILE_SIZE;
 import static fr.poulpogaz.run.Variables.factory;
@@ -31,14 +32,16 @@ public class Tile {
         return factory.getTile(x + dx, y + dy);
     }
 
-    public void setBlock(Block block, Direction direction) {
-        if (block == null) {
-            if (this.block != null) {
+    public void setBlock(Block block, Direction direction, boolean flipped) {
+        if (block == Blocks.AIR || block == null) {
+            if (this.block != Blocks.AIR) {
                 // remove
                 this.block.onBlockDestroyed(this);
-                data.tile = null;
+                if (data != null) {
+                    data.tile = null;
+                }
                 data = null;
-                this.block = null;
+                this.block = Blocks.AIR;
             }
         } else if (this.block == block) {
             // rotate
@@ -55,6 +58,7 @@ public class Tile {
             // replace
             Block oldBlock = this.block;
             BlockData oldData = this.data;
+            oldBlock.onBlockDestroyed(this);
 
             this.block = block;
             data = block.createData(this);
@@ -62,9 +66,12 @@ public class Tile {
             if (data != null) {
                 data.tile = this;
                 data.direction = direction;
+
+                if (data instanceof IFlipData) {
+                    ((IFlipData) data).setFlipped(flipped);
+                }
             }
 
-            oldBlock.onBlockReplaced(this, oldData);
             block.onBlockBuild(this);
         }
     }
