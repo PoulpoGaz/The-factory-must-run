@@ -164,8 +164,7 @@ public class ConveyorBlock extends Block implements IConveyorBlock {
 
         ConveyorManager.ConveyorSection s = data.outputSection;
         if (s != null && data.direction == input && s.isSectionStart(data) && !s.hasParent()) {
-            s.passItem(item);
-            return true;
+            return s.passItem(item);
         }
 
         return false;
@@ -219,7 +218,7 @@ public class ConveyorBlock extends Block implements IConveyorBlock {
 
         if (out.parentCount == 0) {
             out.graph.growStart(-HALF_TILE_SIZE);
-            out.graph.addFirst(HALF_TILE_SIZE, dir.opposite());
+            out.graph.addFirst(HALF_TILE_SIZE, dir.opposite(), false);
 
             return out;
         } else {

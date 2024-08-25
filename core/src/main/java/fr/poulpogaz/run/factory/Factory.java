@@ -11,7 +11,6 @@ public class Factory {
     public int width;
     public int height;
 
-
     public int tick = 0;
 
     public Factory() {
@@ -51,15 +50,15 @@ public class Factory {
         ConveyorManager.tick();
     }
 
-    public void setBlock(int x, int y, Block selectedBlock) {
-        setBlock(x, y, selectedBlock, Direction.LEFT, false);
+    public boolean setBlock(int x, int y, Block selectedBlock) {
+        return setBlock(x, y, selectedBlock, Direction.LEFT, false);
     }
 
-    public void setBlock(int x, int y, Block selectedBlock, Direction direction, boolean flipped) {
+    public boolean setBlock(int x, int y, Block selectedBlock, Direction direction, boolean flipped) {
         if (direction == null) {
             direction = Direction.LEFT;
         }
-        getTile(x, y).setBlock(selectedBlock, direction, flipped);
+        return getTile(x, y).setBlock(selectedBlock, direction, flipped);
     }
 
     public void removeBlock(int x, int y) {

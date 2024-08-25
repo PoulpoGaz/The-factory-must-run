@@ -79,10 +79,9 @@ public class ConveyorManager {
      * 'before' will be removed
      */
     public static void merge(ConveyorSection before, ConveyorSection after) {
-        if (before.endBlock.facing() != after.firstBlock.tile
-            && after.firstBlock.direction != before.endBlock.direction) {
-            throw new IllegalStateException("Cannot merge: disconnected sections");
-        }
+        // if (before.endBlock != after.endBlock) {
+        //     throw new IllegalStateException("Cannot merge: disconnected sections");
+        // }
 
         if (after != before) {
             after.firstBlock = before.firstBlock;
@@ -109,7 +108,10 @@ public class ConveyorManager {
             }
 
             // update block data
-            before.blockIterator((d) -> d.setConveyorSection(FACING, after));
+            before.blockIterator((d) -> {
+                d.setConveyorSection(FACING, after);
+            });
+            after.firstBlock.setConveyorSection(FACING, after); // underground conveyor hack
 
             before.graph.merge(after.graph);
             after.graph = before.graph;
@@ -166,7 +168,16 @@ public class ConveyorManager {
                     float itemX = x + length * node.direction.dx;
                     float itemY = y + length * node.direction.dy;
 
-                    batch.draw(item.item.getIcon(), itemX - HALF_TILE_SIZE / 2f, itemY - HALF_TILE_SIZE / 2f);
+                    if (!node.hidden) {
+                        batch.draw(item.item.getIcon(), itemX - HALF_TILE_SIZE / 2f, itemY - HALF_TILE_SIZE / 2f);
+                    } else if (debug) {
+                        batch.end();
+                        shape.begin(ShapeRenderer.ShapeType.Line);
+                        shape.setColor(0, 1, 0, 1);
+                        shape.rect(itemX - HALF_TILE_SIZE / 2f, itemY - HALF_TILE_SIZE / 2f, HALF_TILE_SIZE, HALF_TILE_SIZE);
+                        shape.end();
+                        batch.begin();
+                    }
 
                     length += item.remaining;
                     item = item.next;
@@ -501,13 +512,13 @@ public class ConveyorManager {
             return item;
         }
 
-        public void passItem(Item item) {
-            passItem(item, 0);
+        public boolean passItem(Item item) {
+            return passItem(item, 0);
         }
 
-        private void passItem(Item item, float advance) {
+        private boolean passItem(Item item, float advance) {
             if (!acceptItem(item)) {
-                return;
+                return false;
             }
 
             ItemList list = itemListPool.obtain();
@@ -545,6 +556,8 @@ public class ConveyorManager {
                     firstNonBlockedItem = list;
                 }
             }
+
+            return true;
         }
 
         public boolean acceptItem(Item item) {
@@ -558,11 +571,15 @@ public class ConveyorManager {
 
 
         public void appendBeforeFirst(ConveyorData first, int length) {
+            appendBeforeFirst(first, length, false);
+        }
+
+        public void appendBeforeFirst(ConveyorData first, int length, boolean hidden) {
             first.setConveyorSection(FACING, this);
             firstBlock = first;
             availableLength += length;
 
-            graph.addFirst(length, first.direction);
+            graph.addFirst(length, first.direction, hidden);
         }
 
         public void growFirst(ConveyorData first, int length) {
@@ -584,7 +601,18 @@ public class ConveyorManager {
                 availableLength += length;
             }
 
-            graph.addLast(length, after.direction);
+            graph.addLast(length, after.direction, false);
+        }
+
+        public void appendAfterEnd(Direction direction, int length, boolean hidden) {
+            if (firstItem != null) {
+                firstItem.remaining += length;
+                firstNonBlockedItem = firstItem;
+            } else {
+                availableLength += length;
+            }
+
+            graph.addLast(length, direction, hidden);
         }
 
 
@@ -601,8 +629,14 @@ public class ConveyorManager {
         }
 
         public void shrinkStart(int length) {
-            firstBlock = (ConveyorData) firstBlock.adjacent(graph.start.direction)
-                                                  .getBlockData();
+            shrinkStart(length, true);
+        }
+
+        public void shrinkStart(int length, boolean setFirstBlock) {
+            if (setFirstBlock) {
+                this.firstBlock = (ConveyorData) firstBlock.adjacent(graph.start.direction)
+                                                           .getBlockData();
+            }
             graph.shrinkStart(length);
 
             if (lastItem != null && length > availableLength) {
@@ -616,9 +650,15 @@ public class ConveyorManager {
         }
 
         public void shrinkEnd(int length) {
+            shrinkEnd(length, true);
+        }
+
+        public void shrinkEnd(int length, boolean setEndBlock) {
             graph.shrinkEnd(length);
-            endBlock = (ConveyorData) endBlock.adjacent(graph.end.direction.opposite())
-                                              .getBlockData();
+            if (setEndBlock) {
+                endBlock = (ConveyorData) endBlock.adjacent(graph.end.direction.opposite())
+                                                  .getBlockData();
+            }
 
             if (firstItem != null) {
                 float remaining = length;
@@ -801,7 +841,7 @@ public class ConveyorManager {
                         last = next;
                     }
 
-                    if (len == 0) {
+                    if (len == 0 || n == endBlock) {
                         break;
                     }
 
@@ -910,12 +950,22 @@ public class ConveyorManager {
             return this;
         }
 
-        public void addLast(int len, Direction dir) {
-            if (end.direction != dir) {
+        public void addLast(int len, Direction dir, boolean hidden) {
+            if (end.direction != dir && !hidden) { // quick fix for underground conveyor
                 end.length += HALF_TILE_SIZE;
                 BlockNode newNode = new BlockNode();
                 newNode.length = len - HALF_TILE_SIZE;
                 newNode.direction = dir;
+                newNode.hidden = false;
+
+                end.next = newNode;
+                newNode.previous = end;
+                end = newNode;
+            } else if (end.hidden != hidden || end.direction != dir) { // quick fix for underground conveyor
+                BlockNode newNode = new BlockNode();
+                newNode.length = len;
+                newNode.direction = dir;
+                newNode.hidden = hidden;
 
                 end.next = newNode;
                 newNode.previous = end;
@@ -927,12 +977,13 @@ public class ConveyorManager {
             length += len;
         }
 
-        public void addFirst(int len, Direction dir) {
-            if (start.direction != dir) {
+        public void addFirst(int len, Direction dir, boolean hidden) {
+            if (start.direction != dir || hidden != start.hidden) {
                 BlockNode newNode = new BlockNode();
                 newNode.length = len;
                 newNode.next = start;
                 newNode.direction = dir;
+                newNode.hidden = hidden;
 
                 start.previous = newNode;
                 start = newNode;
@@ -992,7 +1043,7 @@ public class ConveyorManager {
         }
 
         public void merge(BlockGraph after) {
-            if (end.direction != after.start.direction) {
+            if (end.direction != after.start.direction || end.hidden != after.start.hidden) {
                 end.next = after.start;
                 after.start.previous = end;
                 end = after.end;
@@ -1024,19 +1075,27 @@ public class ConveyorManager {
 
         public void shrinkStart(int length) {
             this.length -= length;
-            start.length -= length;
 
-            x += start.direction.dx * length;
-            y += start.direction.dy * length;
+            while (length > 0 && start != null) {
+                if (length >= start.length) {
+                    length -= start.length;
 
-            if (start.length == 0) {
-                start = start.next;
+                    x += start.direction.dx * start.length;
+                    y += start.direction.dy * start.length;
 
-                if (start != null) {
-                    start.previous.next = null;
-                    start.previous = null;
+                    start = start.next;
+                    if (start != null) {
+                        start.previous.next = null;
+                        start.previous = null;
+                    } else {
+                        end = null;
+                    }
                 } else {
-                    end = null;
+                    x += start.direction.dx * length;
+                    y += start.direction.dy * length;
+
+                    start.length -= length;
+                    length = 0;
                 }
             }
         }
@@ -1069,6 +1128,7 @@ public class ConveyorManager {
         public Direction direction;
         public BlockNode next;
         public BlockNode previous;
+        public boolean hidden;
 
         public int dx() {
             return length * direction.dx;

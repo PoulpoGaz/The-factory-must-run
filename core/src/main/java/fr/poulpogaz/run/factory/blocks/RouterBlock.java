@@ -100,8 +100,7 @@ public class RouterBlock extends Block implements IConveyorBlock {
         Data data = (Data) tile.getBlockData();
 
         if (data.direction == input) {
-            data.inputSection.passItem(item);
-            return true;
+            return data.inputSection.passItem(item);
         }
 
         return false;

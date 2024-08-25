@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -17,6 +18,7 @@ import fr.poulpogaz.run.factory.Floor;
 import fr.poulpogaz.run.factory.Tile;
 import fr.poulpogaz.run.factory.blocks.Block;
 import fr.poulpogaz.run.factory.blocks.Blocks;
+import fr.poulpogaz.run.factory.blocks.UndergroundConveyorBlock;
 
 import static fr.poulpogaz.run.Variables.*;
 
@@ -144,6 +146,20 @@ public class GameScreen implements Screen {
                                               input.tileY * TILE_SIZE,
                                               input.selectedBlockDirection,
                                               input.flipped);
+
+            if (input.selectedBlock == Blocks.UNDERGROUND_CONVEYOR) {
+                if (input.selectedUndergroundConveyor != null) {
+                    Tile t = input.selectedUndergroundConveyor;
+                    drawUndergroundConveyorRange((UndergroundConveyorBlock) t.getBlock(),
+                                                 t.x, t.y);
+                } else {
+                    drawUndergroundConveyorRange((UndergroundConveyorBlock) input.selectedBlock,
+                                                 input.tileX, input.tileY);
+                }
+            }
+        } else if (input.selectedUndergroundConveyor != null) {
+            Tile t = input.selectedUndergroundConveyor;
+            drawUndergroundConveyorRange((UndergroundConveyorBlock) t.getBlock(), t.x, t.y);
         }
 
         batch.end();
@@ -165,6 +181,56 @@ public class GameScreen implements Screen {
                 }
             }
         }
+    }
+
+    private void drawUndergroundConveyorRange(UndergroundConveyorBlock block, int tileX, int tileY) {
+        batch.end();
+        shape.begin(ShapeRenderer.ShapeType.Filled);
+        shape.setColor(1, 154 / 255f, 53 / 255f, 0.25f);
+
+        int x = tileX;
+        int y = tileY;
+
+        int drawX = HALF_TILE_SIZE;
+        int drawY = 0;
+
+        int ox = x * TILE_SIZE + HALF_TILE_SIZE;
+        int oy = y * TILE_SIZE + HALF_TILE_SIZE;
+
+        while (block.isInRange(tileX, tileY, x + 1, y)) {
+            x++;
+            drawX += TILE_SIZE;
+        }
+
+        int len = HALF_TILE_SIZE;
+        do {
+            if (!block.isInRange(tileX, tileY, x, y + 1)) {
+                int y1 = drawY - 1;
+                int y2 = drawY + 1; // take into account line width
+
+                // rotation
+                shape.rectLine(ox + drawX, oy + y1, ox + drawX, oy + y2 + len, 2f);
+                shape.rectLine(ox - y1, oy + drawX, ox - y2 - len, oy + drawX, 2f);
+                shape.rectLine(ox - drawX, oy - y1, ox - drawX, oy - y2 - len, 2f);
+                shape.rectLine(ox + y1, oy - drawX, ox + y2 + len, oy - drawX, 2f);
+
+                // flip
+                shape.rectLine(ox + y1, oy + drawX, ox + y2 + len, oy + drawX, 2f);
+                shape.rectLine(ox + drawX, oy - y1, ox + drawX, oy - y2 - len, 2f);
+                shape.rectLine(ox - y1, oy - drawX, ox - y2 - len, oy - drawX, 2f);
+                shape.rectLine(ox - drawX, oy + y1, ox - drawX, oy + y2 + len, 2f);
+                x--;
+                drawX -= TILE_SIZE;
+                drawY = drawY + len;
+                len = 0;
+            } else {
+                len += TILE_SIZE;
+                y++;
+            }
+        } while (x >= tileX);
+
+        shape.end();
+        batch.begin();
     }
 
     private void setupBatches(Matrix4 proj, Matrix4 transform) {

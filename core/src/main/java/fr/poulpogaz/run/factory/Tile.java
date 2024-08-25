@@ -32,7 +32,7 @@ public class Tile {
         return factory.getTile(x + dx, y + dy);
     }
 
-    public void setBlock(Block block, Direction direction, boolean flipped) {
+    public boolean setBlock(Block block, Direction direction, boolean flipped) {
         if (block == Blocks.AIR || block == null) {
             if (this.block != Blocks.AIR) {
                 // remove
@@ -42,18 +42,30 @@ public class Tile {
                 }
                 data = null;
                 this.block = Blocks.AIR;
+
+                return true;
             }
+            return false;
         } else if (this.block == block) {
             // rotate
             if (data == null) {
-                return;
+                return false;
             }
-            if (data.direction == direction) {
-                return; // do not replace if same block with same rotation
+            IFlipData flipData = data instanceof IFlipData ? (IFlipData) data : null;
+
+            if (data.direction == direction
+                || (flipData != null && flipData.isFlipped() == flipped)) {
+                return false; // do not replace if same block with same rotation/flip
             }
 
-            block.onBlockRotated(this, direction);
+            block.onBlockRotated(this, direction, flipped);
             data.direction = direction;
+            
+            if (flipData != null) {
+                flipData.setFlipped(flipped);
+            }
+
+            return true;
         } else  {
             // replace
             Block oldBlock = this.block;
@@ -73,6 +85,8 @@ public class Tile {
             }
 
             block.onBlockBuild(this);
+
+            return true;
         }
     }
 

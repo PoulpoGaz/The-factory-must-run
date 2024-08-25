@@ -42,7 +42,7 @@ public abstract class Block extends Content {
 
     }
 
-    public void onBlockRotated(Tile tile, Direction newDirection) {
+    public void onBlockRotated(Tile tile, Direction newDirection, boolean flipped) {
 
     }
 
