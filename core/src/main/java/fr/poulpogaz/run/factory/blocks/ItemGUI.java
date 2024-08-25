@@ -6,11 +6,8 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
 import fr.poulpogaz.run.factory.Icon;
 import fr.poulpogaz.run.factory.Tile;
-import fr.poulpogaz.run.factory.item.Item;
-import fr.poulpogaz.run.factory.item.Items;
 
 import static fr.poulpogaz.run.Variables.*;
-import static fr.poulpogaz.run.Variables.batch;
 
 public class ItemGUI {
 
@@ -20,8 +17,8 @@ public class ItemGUI {
 
     private static boolean loaded = false;
 
-    private static TextureRegion white;
-    private static TextureRegion itemSelected;
+    public static TextureRegion white;
+    public static TextureRegion itemSelected;
 
     public static void load() {
         if (loaded) {
@@ -45,6 +42,10 @@ public class ItemGUI {
     }
 
     public static <T extends Icon> void drawGUI(Tile tile, Rectangle size, Array<T> items, T selectedItem) {
+        drawGUI(tile, size, items, selectedItem, DefaultHoverInterceptor.instance);
+    }
+
+    public static <T extends Icon> void drawGUI(Tile tile, Rectangle size, Array<T> items, T selectedItem, HoverInterceptor interceptor) {
         float color = batch.getPackedColor();
         batch.setColor(0.3f, 0.3f, 0.3f, 0.8f);
         batch.draw(white, size.x, size.y, size.width, size.height);
@@ -60,11 +61,10 @@ public class ItemGUI {
 
             if (item == selectedItem) {
                 batch.draw(itemSelected, x, y);
-            } else if (hoverI == i) {
-                color = batch.getPackedColor();
-                batch.setColor(0.5f, 0.5f, 0.5f, 1f);
-                batch.draw(itemSelected, x, y);
-                batch.setPackedColor(color);
+            }
+
+            if (hoverI == i) {
+                interceptor.itemHovered(x, y, hoverI, item == selectedItem);
             }
 
             x += ITEM_BOX_SIZE;
@@ -109,5 +109,24 @@ public class ItemGUI {
         }
 
         return -1;
+    }
+
+    public interface HoverInterceptor {
+        void itemHovered(float x, float y, int index, boolean selected);
+    }
+
+    public static class DefaultHoverInterceptor implements HoverInterceptor {
+
+        public static final DefaultHoverInterceptor instance = new DefaultHoverInterceptor();
+
+        @Override
+        public void itemHovered(float x, float y, int index, boolean selected) {
+            if (!selected) {
+                float color = batch.getPackedColor();
+                batch.setColor(0.5f, 0.5f, 0.5f, 1f);
+                batch.draw(itemSelected, x, y);
+                batch.setPackedColor(color);
+            }
+        }
     }
 }

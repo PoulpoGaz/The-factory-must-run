@@ -25,7 +25,7 @@ public class RouterBlock extends Block implements IConveyorBlock, IGUIBlock {
     @Override
     public void load() {
         super.load();
-
+        ItemGUI.load();
         regions = loadAnimation(name);
     }
 

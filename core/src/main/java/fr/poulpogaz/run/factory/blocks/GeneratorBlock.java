@@ -1,11 +1,7 @@
 package fr.poulpogaz.run.factory.blocks;
 
-import com.badlogic.gdx.Input;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.utils.Array;
 import fr.poulpogaz.run.Direction;
-import fr.poulpogaz.run.Variables;
 import fr.poulpogaz.run.factory.Tile;
 import fr.poulpogaz.run.factory.item.Item;
 import fr.poulpogaz.run.factory.item.Items;

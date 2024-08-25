@@ -4,23 +4,30 @@ size: 1024, 128
 format: RGBA8888
 filter: Nearest, Nearest
 repeat: none
-capacitor
+arrow
   rotate: false
   xy: 68, 72
   size: 16, 16
   orig: 16, 16
   offset: 0, 0
   index: -1
-carbon
+capacitor
   rotate: false
   xy: 24, 6
   size: 16, 16
   orig: 16, 16
   offset: 0, 0
   index: -1
-clock
+carbon
   rotate: false
   xy: 308, 38
+  size: 16, 16
+  orig: 16, 16
+  offset: 0, 0
+  index: -1
+clock
+  rotate: false
+  xy: 42, 6
   size: 16, 16
   orig: 16, 16
   offset: 0, 0
@@ -146,21 +153,21 @@ conveyor_turn
   index: 8
 copper_plate
   rotate: false
-  xy: 42, 6
+  xy: 326, 38
   size: 16, 16
   orig: 16, 16
   offset: 0, 0
   index: -1
 copper_wire
   rotate: false
-  xy: 326, 38
+  xy: 344, 38
   size: 16, 16
   orig: 16, 16
   offset: 0, 0
   index: -1
 electronic_circuit
   rotate: false
-  xy: 344, 38
+  xy: 362, 38
   size: 16, 16
   orig: 16, 16
   offset: 0, 0
@@ -279,7 +286,7 @@ unloading_conveyor
   index: 8
 gear
   rotate: false
-  xy: 362, 38
+  xy: 380, 38
   size: 16, 16
   orig: 16, 16
   offset: 0, 0
@@ -300,14 +307,14 @@ ground
   index: -1
 inductor
   rotate: false
-  xy: 380, 38
+  xy: 398, 38
   size: 16, 16
   orig: 16, 16
   offset: 0, 0
   index: -1
 iron_plate
   rotate: false
-  xy: 398, 38
+  xy: 416, 38
   size: 16, 16
   orig: 16, 16
   offset: 0, 0
@@ -328,21 +335,21 @@ machine
   index: -1
 nothing
   rotate: false
-  xy: 416, 38
+  xy: 434, 38
   size: 16, 16
   orig: 16, 16
   offset: 0, 0
   index: -1
 pipe
   rotate: false
-  xy: 434, 38
+  xy: 452, 38
   size: 16, 16
   orig: 16, 16
   offset: 0, 0
   index: -1
 resistor
   rotate: false
-  xy: 452, 38
+  xy: 470, 38
   size: 16, 16
   orig: 16, 16
   offset: 0, 0
@@ -405,14 +412,14 @@ router
   index: 8
 silicon
   rotate: false
-  xy: 470, 38
+  xy: 488, 38
   size: 16, 16
   orig: 16, 16
   offset: 0, 0
   index: -1
 transistor
   rotate: false
-  xy: 488, 38
+  xy: 506, 38
   size: 16, 16
   orig: 16, 16
   offset: 0, 0
@@ -629,14 +636,14 @@ white
   index: -1
 wood
   rotate: false
-  xy: 506, 38
+  xy: 524, 38
   size: 16, 16
   orig: 16, 16
   offset: 0, 0
   index: -1
 wood_plank
   rotate: false
-  xy: 524, 38
+  xy: 542, 38
   size: 16, 16
   orig: 16, 16
   offset: 0, 0

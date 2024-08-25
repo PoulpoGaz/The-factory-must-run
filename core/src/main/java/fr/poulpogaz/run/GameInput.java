@@ -60,9 +60,15 @@ public class GameInput extends BasicInputProcessor {
         } else if (selectedBlock != null) {
             if (factory.isInFactory(tileX, tileY) && isMousePressed(Input.Buttons.LEFT)) {
                 if (playerResources >= selectedBlock.value() || debug) {
+                    Tile tile = factory.getTile(tileX, tileY).multiBlockAnchor();
+
                     boolean placed = factory.setBlock(tileX, tileY, selectedBlock, selectedBlockDirection, flipped);
 
                     if (placed) {
+                        if (tile == guiTile) {
+                            closeGUI();
+                        }
+
                         playerResources -= selectedBlock.value();
 
                         if (selectedBlock == Blocks.UNDERGROUND_CONVEYOR) {
@@ -112,7 +118,7 @@ public class GameInput extends BasicInputProcessor {
                     IGUIBlock newGUI = (IGUIBlock) tile.getBlock();
                     if (gui == null || newGUI != gui) {
                         gui = newGUI;
-                        guiTile = tile;
+                        guiTile = tile.multiBlockAnchor();
                         guiRectangle = gui.showGUI(guiTile);
                     }
 

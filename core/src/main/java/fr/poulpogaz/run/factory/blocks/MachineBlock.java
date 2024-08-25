@@ -3,9 +3,9 @@ package fr.poulpogaz.run.factory.blocks;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
 import fr.poulpogaz.run.Direction;
+import fr.poulpogaz.run.Utils;
 import fr.poulpogaz.run.factory.Tile;
 import fr.poulpogaz.run.factory.item.Item;
-import fr.poulpogaz.run.factory.item.Items;
 import fr.poulpogaz.run.factory.recipes.Recipe;
 import fr.poulpogaz.run.factory.recipes.Recipes;
 
@@ -22,6 +22,8 @@ public class MachineBlock extends Block implements ItemConsumer, IGUIBlock {
     @Override
     public void load() {
         super.load();
+        ItemGUI.load();
+        HoverInterceptor.instance.load();
     }
 
     @Override
@@ -139,7 +141,9 @@ public class MachineBlock extends Block implements ItemConsumer, IGUIBlock {
 
     @Override
     public void drawGUI(Tile tile, Rectangle size) {
-        ItemGUI.drawGUI(tile, size, Recipes.all, ((Data) tile.getBlockData()).recipe);
+        HoverInterceptor.instance.index = -1;
+        ItemGUI.drawGUI(tile, size, Recipes.all, ((Data) tile.getBlockData()).recipe, HoverInterceptor.instance);
+        HoverInterceptor.instance.draw();
     }
 
     @Override
@@ -157,6 +161,98 @@ public class MachineBlock extends Block implements ItemConsumer, IGUIBlock {
 
         return false;
     }
+
+
+
+    private static class HoverInterceptor extends ItemGUI.DefaultHoverInterceptor {
+
+        private static final HoverInterceptor instance = new HoverInterceptor();
+
+        private float x;
+        private float y;
+        private int index;
+
+        private TextureRegion clock;
+        private TextureRegion arrow;
+
+        public void load() {
+            clock = atlas.findRegion("clock");
+            arrow = atlas.findRegion("arrow");
+        }
+
+        @Override
+        public void itemHovered(float x, float y, int index, boolean hovered) {
+            super.itemHovered(x, y, index, hovered);
+
+            this.x = x;
+            this.y = y;
+            this.index = index;
+        }
+
+        public void draw() {
+            if (index < 0 || Recipes.all.get(index) == Recipes.NOTHING) {
+                return;
+            }
+
+            Recipe recipe = Recipes.all.get(index);
+            float length = layout(recipe);
+
+            float color = batch.getPackedColor();
+            batch.setColor(0.3f, 0.3f, 0.3f, 0.8f);
+            batch.draw(ItemGUI.white, x, y - HALF_TILE_SIZE - 2, length, HALF_TILE_SIZE + 2);
+            batch.setPackedColor(color);
+
+            float textY = y - 3;
+            float imageY = y - HALF_TILE_SIZE - 1;
+
+            x++;
+            x += font.draw(batch, Float.toString(recipe.duration / 60f), x, textY).width + 1;
+            batch.draw(clock, x, imageY);
+            x += clock.getRegionWidth() + 1;
+
+            for (int i = 0; i < recipe.inputCount(); i++) {
+                x += font.draw(batch, Integer.toString(recipe.requiredCount(i)), x, textY).width + 1;
+                batch.draw(recipe.inputs[i].item.getIcon(), x, imageY);
+                x += HALF_TILE_SIZE + 1;
+            }
+
+            batch.draw(arrow, x, imageY);
+            x += clock.getRegionWidth() + 1;
+
+            for (int i = 0; i < recipe.outputCount(); i++) {
+                x += font.draw(batch, Integer.toString(recipe.outputCount(i)), x, textY).width + 1;
+                batch.draw(recipe.outputs[i].item.getIcon(), x, imageY);
+                x += HALF_TILE_SIZE + 1;
+            }
+        }
+
+        private float layout(Recipe recipe) {
+            Utils.layout.setText(font, Float.toString(recipe.duration / 60f));
+
+            float length = Utils.layout.width + clock.getRegionWidth() + 2;
+            for (int i = 0; i < recipe.inputCount(); i++) {
+                Utils.layout.setText(font, Integer.toString(recipe.requiredCount(i)));
+                length += Utils.layout.width;
+                length += HALF_TILE_SIZE + 2;
+            }
+
+            length += arrow.getRegionWidth();
+
+            for (int i = 0; i < recipe.outputCount(); i++) {
+                Utils.layout.setText(font, Integer.toString(recipe.outputCount(i)));
+                length += Utils.layout.width;
+                length += HALF_TILE_SIZE + 2;
+            }
+
+            return length + 1;
+        }
+    }
+
+
+
+
+
+
 
     private static class Data extends BlockData {
 
