@@ -27,7 +27,7 @@ public class Camera extends OrthographicCamera {
     }
 
     public void zoom(float scroll, float mouseX, float mouseY) {
-        zoomT = MathUtils.clamp(zoomT + 0.5f * scroll, -2, 10);
+        zoomT = MathUtils.clamp(zoomT + 0.5f * scroll, -2, 3);
 
         float oldZoom = zoom;
         zoom = zoom(zoomT);

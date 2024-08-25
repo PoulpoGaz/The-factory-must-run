@@ -11,6 +11,7 @@ public class Variables {
 
     public static final int TILE_SIZE = 32;
     public static final int HALF_TILE_SIZE = TILE_SIZE / 2;
+    public static final int DEFAULT_RESOURCES = 200;
 
     public static final AssetManager assetManager = new AssetManager();
     public static ShapeRenderer shape;
@@ -21,6 +22,7 @@ public class Variables {
     public static GameInput input;
     public static Camera camera;
     public static Factory factory;
+    public static int playerResources = DEFAULT_RESOURCES;
 
     public static boolean debug = true;
 }

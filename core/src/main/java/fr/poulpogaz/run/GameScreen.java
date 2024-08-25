@@ -6,19 +6,20 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import fr.poulpogaz.run.factory.ConveyorManager;
 import fr.poulpogaz.run.factory.Factory;
 import fr.poulpogaz.run.factory.Floor;
 import fr.poulpogaz.run.factory.Tile;
-import fr.poulpogaz.run.factory.blocks.Block;
-import fr.poulpogaz.run.factory.blocks.Blocks;
-import fr.poulpogaz.run.factory.blocks.UndergroundConveyorBlock;
+import fr.poulpogaz.run.factory.blocks.*;
 
 import static fr.poulpogaz.run.Variables.*;
 
@@ -29,6 +30,7 @@ public class GameScreen implements Screen {
     private final Stage stage = new Stage();
     private final Skin skin;
     private Table rootTable;
+    private ButtonGroup<Button> group = new ButtonGroup<>();
 
     public GameScreen() {
         skin = new Skin(Gdx.files.internal("textures/uiskin.json"));
@@ -41,64 +43,47 @@ public class GameScreen implements Screen {
         rootTable = new Table();
         rootTable.setFillParent(true);
 
-        Button conveyor = new Button(new Image(atlas.findRegion("conveyor")), skin);
-        conveyor.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                input.select(Blocks.CONVEYOR);
-            }
-        });
-
-        Button router = new Button(new Image(atlas.findRegion("router")), skin);
-        router.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                input.select(Blocks.ROUTER);
-            }
-        });
-
-        Button undergroundConveyor = new Button(new Image(atlas.findRegion("underground_conveyor_input")), skin);
-        undergroundConveyor.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                input.select(Blocks.UNDERGROUND_CONVEYOR);
-            }
-        });
-
-        Button machine = new Button(new Image(atlas.findRegion("machine")), skin);
-        machine.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                input.select(Blocks.MACHINE);
-            }
-        });
-
-        Button wall = new Button(new Image(atlas.findRegion("wall")), skin);
-        wall.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                input.select(Blocks.WALL);
-            }
-        });
-
-        Button generator = new Button(new Image(atlas.findRegion("generator")), skin);
-        generator.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                input.select(Blocks.GENERATOR);
-            }
-        });
-
-
         rootTable.bottom();
-        rootTable.add(conveyor).padLeft(10).padRight(10);
-        rootTable.add(router).padLeft(10).padRight(10);
-        rootTable.add(undergroundConveyor).padLeft(10).padRight(10);
-        rootTable.add(machine).padLeft(10).padRight(10);
-        rootTable.add(wall).padLeft(10).padRight(10);
-        rootTable.add(generator).padLeft(10).padRight(10);
+        createButton(Blocks.CONVEYOR, "conveyor");
+        createButton(Blocks.ROUTER, "router");
+        createButton(Blocks.UNDERGROUND_CONVEYOR, "underground_conveyor_input");
+        createButton(Blocks.GENERATOR, "generator");
+        createButton(Blocks.CONSUMER, "consumer");
+        createButton(Blocks.MACHINE, "machine");
+        createButton(Blocks.WALL, "wall");
 
         stage.addActor(rootTable);
+    }
+
+    private void createButton(Block block, String icon) {
+        TextureRegion r = atlas.findRegion(icon);
+
+        Button button = new Button(new Image(new TextureRegionDrawable(r), Scaling.fit), skin, "toggle") {
+            @Override
+            public float getPrefWidth() {
+                return (float) (TILE_SIZE * 1.25);
+            }
+
+            @Override
+            public float getPrefHeight() {
+                return (float) (TILE_SIZE * 1.25);
+            }
+        };
+        button.addListener(createChangeLister(block));
+
+        group.add(button);
+        rootTable.add(button).padLeft(20).padRight(20);
+    }
+
+    private static ChangeListener createChangeLister(Block block) {
+        return new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                if (input != null && ((Button) actor).isChecked()) {
+                    input.select(block);
+                }
+            }
+        };
     }
 
     @Override
@@ -116,18 +101,27 @@ public class GameScreen implements Screen {
         ScreenUtils.clear(0, 0, 0, 1);
         renderFactory();
 
+        setupBatches(stage.getViewport().getCamera().combined, ID);
+
         if (input.pause) {
-            setupBatches(stage.getViewport().getCamera().combined, ID);
-            batch.begin();
             font.draw(batch, "Paused", 0, Gdx.graphics.getHeight());
-            batch.end();
         }
+
+        Utils.drawStringCentered("Resources: " + playerResources, 0, Gdx.graphics.getHeight(), Gdx.graphics.getWidth());
+        batch.end();
+
         stage.draw();
     }
 
 
     private void update(float delta) {
         input.update();
+
+        if (input.selectedBlock == null && group.getChecked() != null) {
+            group.uncheckAll();
+        }
+
+
         if (!input.pause || input.simulateTicks > 0) {
             factory.tick();
 
@@ -143,35 +137,38 @@ public class GameScreen implements Screen {
         batch.begin();
 
         drawFactory();
-        ConveyorManager.drawItems();
 
         if (debug) {
             ConveyorManager.drawGraphs();
         }
 
         // draw build plan
-        if (input.selectedBlock != null) {
-            input.selectedBlock.drawBuildPlan(input.tileX * TILE_SIZE,
-                                              input.tileY * TILE_SIZE,
-                                              input.selectedBlockDirection,
-                                              input.flipped);
-
-            if (input.selectedBlock == Blocks.UNDERGROUND_CONVEYOR) {
-                if (input.selectedUndergroundConveyor != null) {
-                    Tile t = input.selectedUndergroundConveyor;
-                    drawUndergroundConveyorRange((UndergroundConveyorBlock) t.getBlock(),
-                                                 t.x, t.y);
-                } else {
-                    drawUndergroundConveyorRange((UndergroundConveyorBlock) input.selectedBlock,
-                                                 input.tileX, input.tileY);
-                }
-            }
-        } else if (input.selectedUndergroundConveyor != null) {
-            Tile t = input.selectedUndergroundConveyor;
-            drawUndergroundConveyorRange((UndergroundConveyorBlock) t.getBlock(), t.x, t.y);
+        if (input.gui != null) {
+            input.gui.drawGUI(input.guiTile, input.guiRectangle);
         }
 
-        batch.end();
+        if (input.gui == null || !input.guiRectangle.contains(input.world.x, input.world.y)) {
+            if (input.selectedBlock != null) {
+                input.selectedBlock.drawBuildPlan(input.tileX * TILE_SIZE,
+                                                  input.tileY * TILE_SIZE,
+                                                  input.selectedBlockDirection,
+                                                  input.flipped);
+
+                if (input.selectedBlock == Blocks.UNDERGROUND_CONVEYOR) {
+                    if (input.selectedUndergroundConveyor != null) {
+                        Tile t = input.selectedUndergroundConveyor;
+                        drawUndergroundConveyorRange((UndergroundConveyorBlock) t.getBlock(),
+                                                     t.x, t.y);
+                    } else {
+                        drawUndergroundConveyorRange((UndergroundConveyorBlock) input.selectedBlock,
+                                                     input.tileX, input.tileY);
+                    }
+                }
+            } else if (input.selectedUndergroundConveyor != null) {
+                Tile t = input.selectedUndergroundConveyor;
+                drawUndergroundConveyorRange((UndergroundConveyorBlock) t.getBlock(), t.x, t.y);
+            }
+        }
     }
 
 
@@ -193,6 +190,20 @@ public class GameScreen implements Screen {
                 Block block = tile.getBlock();
                 if (block != null) {
                     block.draw(tile);
+                }
+            }
+        }
+
+        ConveyorManager.drawItems();
+        // draw router filter because no depth is set up
+        for (Tile tile : factory.tiles) {
+            if (tile.getBlock() instanceof RouterBlock) {
+                RouterBlock.Data data = (RouterBlock.Data) tile.getBlockData();
+
+                if (data.getFilter() != null) {
+                    batch.draw(data.getFilter().getIcon(),
+                               tile.drawX() + HALF_TILE_SIZE / 2f + data.direction.dx * HALF_TILE_SIZE / 2f,
+                               tile.drawY() + HALF_TILE_SIZE / 2f + data.direction.dy * HALF_TILE_SIZE / 2f);
                 }
             }
         }

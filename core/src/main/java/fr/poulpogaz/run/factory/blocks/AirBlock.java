@@ -30,6 +30,11 @@ public class AirBlock extends Block {
     }
 
     @Override
+    public int value() {
+        return 0;
+    }
+
+    @Override
     public int width() {
         return 0;
     }

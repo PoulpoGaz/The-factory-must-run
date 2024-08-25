@@ -1,6 +1,7 @@
 package fr.poulpogaz.run.factory.blocks;
 
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import fr.poulpogaz.run.Variables;
 import fr.poulpogaz.run.factory.Tile;
 
 import static fr.poulpogaz.run.Utils.flip;
@@ -58,6 +59,16 @@ public class WallBlock extends Block implements AutoTiler {
     @Override
     public int height() {
         return 1;
+    }
+
+    @Override
+    public void onBlockDestroyed(Tile tile) {
+        Variables.playerResources += value();
+    }
+
+    @Override
+    public int value() {
+        return -1;
     }
 
     @Override

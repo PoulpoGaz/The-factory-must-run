@@ -5,9 +5,10 @@ import com.badlogic.gdx.utils.Array;
 import fr.poulpogaz.run.Content;
 import fr.poulpogaz.run.ContentType;
 import fr.poulpogaz.run.Utils;
+import fr.poulpogaz.run.factory.Icon;
 import fr.poulpogaz.run.factory.item.Item;
 
-public class Recipe extends Content {
+public class Recipe extends Content implements Icon {
 
     public ItemCount[] inputs;
     public ItemCount[] outputs;
@@ -50,6 +51,11 @@ public class Recipe extends Content {
     @Override
     public ContentType getContentType() {
         return ContentType.RECIPE;
+    }
+
+    @Override
+    public TextureRegion getIcon() {
+        return icon;
     }
 
     public static class ItemCount {

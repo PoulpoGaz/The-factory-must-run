@@ -82,7 +82,18 @@ public class Tile {
         } else*/  {
             // replace
             Block oldBlock = this.block;
-            BlockData oldData = this.data;
+            if (this.block == block) {
+                if (data == null) {
+                    return false;
+                }
+                IFlipData flipData = data instanceof IFlipData ? (IFlipData) data : null;
+
+                if (data.direction == direction
+                    || (flipData != null && flipData.isFlipped() == flipped)) {
+                    return false; // do not replace if same block with same rotation/flip
+                }
+            }
+
             oldBlock.onBlockDestroyed(this);
 
             this.block = block;

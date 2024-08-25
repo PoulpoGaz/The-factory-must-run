@@ -383,6 +383,11 @@ public class UndergroundConveyorBlock extends Block implements IConveyorBlock {
         return true;
     }
 
+    @Override
+    public int value() {
+        return 1000;
+    }
+
     public static class Data extends ConveyorData implements IFlipData {
 
         private final UndergroundConveyorBlock block;

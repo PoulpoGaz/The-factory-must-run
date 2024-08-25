@@ -83,6 +83,8 @@ public abstract class Block extends Content {
         return width() > 1 || height() > 1;
     }
 
+    public abstract int value();
+
     @Override
     public final ContentType getContentType() {
         return ContentType.BLOCK;

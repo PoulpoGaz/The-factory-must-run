@@ -1,20 +1,20 @@
 package fr.poulpogaz.run.factory.blocks;
 
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Rectangle;
 import fr.poulpogaz.run.Direction;
 import fr.poulpogaz.run.RelativeDirection;
 import fr.poulpogaz.run.Utils;
 import fr.poulpogaz.run.factory.ConveyorManager;
 import fr.poulpogaz.run.factory.Tile;
 import fr.poulpogaz.run.factory.item.Item;
+import fr.poulpogaz.run.factory.item.Items;
 
 import static fr.poulpogaz.run.RelativeDirection.*;
-import static fr.poulpogaz.run.RelativeDirection.relativePos;
 import static fr.poulpogaz.run.Utils.loadAnimation;
-import static fr.poulpogaz.run.Variables.HALF_TILE_SIZE;
-import static fr.poulpogaz.run.Variables.factory;
+import static fr.poulpogaz.run.Variables.*;
 
-public class RouterBlock extends Block implements IConveyorBlock {
+public class RouterBlock extends Block implements IConveyorBlock, IGUIBlock {
 
     private TextureRegion[] regions;
 
@@ -168,6 +168,11 @@ public class RouterBlock extends Block implements IConveyorBlock {
     }
 
     @Override
+    public int value() {
+        return 200;
+    }
+
+    @Override
     public boolean canBeRotated() {
         return true;
     }
@@ -182,12 +187,42 @@ public class RouterBlock extends Block implements IConveyorBlock {
         return 1;
     }
 
+    @Override
+    public Rectangle showGUI(Tile tile) {
+        return ItemGUI.showGUI(tile, Items.all);
+    }
+
+    @Override
+    public void drawGUI(Tile tile, Rectangle size) {
+        ItemGUI.drawGUI(tile, size, Items.all, ((Data) tile.getBlockData()).filter);
+    }
+
+    @Override
+    public boolean updateGUI(Tile tile, Rectangle size) {
+        Item item = ItemGUI.updateGUI(tile, size, Items.all);
+
+        if (item != null) {
+            Data data = (Data) tile.getBlockData();
+
+            if (data.filter == item) {
+                data.filter = null;
+            } else {
+                data.filter = item;
+            }
+
+            return true;
+        }
+        return false;
+    }
+
     public static class Data extends ConveyorData {
 
         public final RouterBlock block;
         private ConveyorManager.ConveyorSection inputSection;
 
         private final int[] outputPrio = {0, 1, 2};
+
+        private Item filter;
 
         public Data(RouterBlock block) {
             this.block = block;
@@ -210,7 +245,13 @@ public class RouterBlock extends Block implements IConveyorBlock {
 
         @Override
         public RelativeDirection outputPriority(Item item, int attempt) {
-            return RelativeDirection.values[outputPrio[attempt]];
+            if (filter == item) {
+                return FACING;
+            } else if (filter != null && outputPrio[attempt] == FACING.ordinal()) {
+                return RelativeDirection.values[outputPrio[(attempt + 1) % 3]];
+            } else {
+                return RelativeDirection.values[outputPrio[attempt]];
+            }
         }
 
         @Override
@@ -237,6 +278,10 @@ public class RouterBlock extends Block implements IConveyorBlock {
             if (direction == RelativeDirection.BEHIND) {
                 this.inputSection = section;
             }
+        }
+
+        public Item getFilter() {
+            return filter;
         }
     }
 }

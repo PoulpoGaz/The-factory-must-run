@@ -1,19 +1,19 @@
 package fr.poulpogaz.run.factory.blocks;
 
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Rectangle;
 import fr.poulpogaz.run.Direction;
-import fr.poulpogaz.run.factory.ConveyorManager;
 import fr.poulpogaz.run.factory.Tile;
 import fr.poulpogaz.run.factory.item.Item;
+import fr.poulpogaz.run.factory.item.Items;
 import fr.poulpogaz.run.factory.recipes.Recipe;
 import fr.poulpogaz.run.factory.recipes.Recipes;
 
-import java.io.DataInput;
 import java.util.Arrays;
 
 import static fr.poulpogaz.run.Variables.*;
 
-public class MachineBlock extends Block implements ItemConsumer {
+public class MachineBlock extends Block implements ItemConsumer, IGUIBlock {
 
     public MachineBlock() {
         super("machine");
@@ -43,6 +43,10 @@ public class MachineBlock extends Block implements ItemConsumer {
     @Override
     public void tick(BlockData data) {
         Data machine = (Data) data;
+
+        if (machine.recipe == Recipes.NOTHING) {
+            return;
+        }
 
         if (machine.isManufacturing()) {
             machine.tick++;
@@ -80,8 +84,12 @@ public class MachineBlock extends Block implements ItemConsumer {
     private boolean outputTo(Tile adj, Direction dir, Item item) {
         Block adjBlock = adj.getBlock();
         if (adjBlock instanceof ItemConsumer) {
-            // TODO
-            return false;
+            ItemConsumer c = (ItemConsumer) adjBlock;
+
+            if (c.acceptItem(adj, item)) {
+                c.passItem(adj, item);
+                return true;
+            }
         } else if (adjBlock instanceof IConveyorBlock) {
             IConveyorBlock conveyor = (IConveyorBlock) adjBlock;
             return conveyor.passItem(adj, dir, item);
@@ -93,6 +101,11 @@ public class MachineBlock extends Block implements ItemConsumer {
     @Override
     public boolean isUpdatable() {
         return true;
+    }
+
+    @Override
+    public int value() {
+        return 50;
     }
 
     @Override
@@ -119,6 +132,32 @@ public class MachineBlock extends Block implements ItemConsumer {
         data.addItemInput(item);
     }
 
+    @Override
+    public Rectangle showGUI(Tile tile) {
+        return ItemGUI.showGUI(tile, Recipes.all);
+    }
+
+    @Override
+    public void drawGUI(Tile tile, Rectangle size) {
+        ItemGUI.drawGUI(tile, size, Recipes.all, ((Data) tile.getBlockData()).recipe);
+    }
+
+    @Override
+    public boolean updateGUI(Tile tile, Rectangle size) {
+        Recipe recipe = ItemGUI.updateGUI(tile, size, Recipes.all);
+
+        if (recipe != null) {
+            Data data = (Data) tile.getBlockData();
+            if (data.recipe != recipe) {
+                data.setRecipe(recipe);
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
     private static class Data extends BlockData {
 
         private Recipe recipe;
@@ -132,12 +171,24 @@ public class MachineBlock extends Block implements ItemConsumer {
         private boolean manufacturing = false;
 
         public Data() {
-            setRecipe(Recipes.GEAR);
+            setRecipe(Recipes.NOTHING);
         }
 
         public void setRecipe(Recipe recipe) {
             this.recipe = recipe;
-            contents = new int[recipe.inputCount() + recipe.outputCount()];
+
+            int length = recipe.inputCount() + recipe.outputCount();
+            if (contents != null && length == contents.length) {
+                Arrays.fill(contents, 0);
+            } else {
+                contents = new int[length];
+            }
+
+            validIngredientsCount = 0;
+            outputFullCount = 0;
+            outputAvailableCount = 0;
+            tick = 0;
+            manufacturing = false;
         }
 
         public void addItemInput(Item item) {
@@ -180,8 +231,6 @@ public class MachineBlock extends Block implements ItemConsumer {
 
         public void startManufacturing() {
             if (canManufacture()) {
-                System.out.println("Start Manufacturing...");
-
                 for (int i = 0; i < recipe.inputCount(); i++) {
                     contents[i] -= recipe.requiredCount(i);
 
@@ -198,8 +247,6 @@ public class MachineBlock extends Block implements ItemConsumer {
             if (tick < recipeDuration()) {
                 return;
             }
-
-            System.out.println("finished manufacturing");
 
             for (int i = 0, j = recipe.inputCount(); i < recipe.outputCount(); i++, j++) {
                 if (contents[j] == 0) {

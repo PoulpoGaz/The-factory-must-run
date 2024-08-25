@@ -1,26 +1,52 @@
 package fr.poulpogaz.run.factory.blocks;
 
+import com.badlogic.gdx.Input;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.utils.Array;
 import fr.poulpogaz.run.Direction;
+import fr.poulpogaz.run.Variables;
 import fr.poulpogaz.run.factory.Tile;
+import fr.poulpogaz.run.factory.item.Item;
 import fr.poulpogaz.run.factory.item.Items;
 
-import java.lang.invoke.VarHandle;
+import static fr.poulpogaz.run.Variables.*;
 
-import static fr.poulpogaz.run.Variables.factory;
-
-public class GeneratorBlock extends Block {
+public class GeneratorBlock extends Block implements IGUIBlock {
 
     public GeneratorBlock(String name) {
         super(name);
     }
 
     @Override
-    public void tick(BlockData data) {
-        if (factory.getTick() % 1 == 0) {
-            Tile tile = data.tile;
+    public void load() {
+        super.load();
+        ItemGUI.load();
+    }
 
-            for (Direction direction : Direction.values) {
-                generateItem((Data) data, tile.adjacent(direction), direction);
+    @Override
+    public void draw(Tile tile) {
+        super.draw(tile);
+
+        Data data = (Data) tile.getBlockData();
+        if (data.item != null) {
+            batch.draw(data.item.getIcon(),
+                       tile.drawX() + HALF_TILE_SIZE / 2f,
+                       tile.drawY() + HALF_TILE_SIZE / 2f);
+        }
+    }
+
+    @Override
+    public void tick(BlockData blockData) {
+        if (factory.tick % 16 == 0) {
+            Data data = (Data) blockData;
+
+            if (data.item != null) {
+                Tile tile = data.tile;
+
+                for (Direction direction : Direction.values) {
+                    generateItem(data, tile.adjacent(direction), direction);
+                }
             }
         }
     }
@@ -29,8 +55,9 @@ public class GeneratorBlock extends Block {
         if (adjacent != null && adjacent.getBlock() instanceof IConveyorBlock) {
             IConveyorBlock block = (IConveyorBlock) adjacent.getBlock();
 
-            block.passItem(adjacent, rot,
-                           genData.i % 3 == 0 ? Items.IRON_PLATE : (genData.i % 3 == 1 ? Items.GEAR : Items.PIPE));
+            if (block.passItem(adjacent, rot, genData.item)) {
+                playerResources += genData.item.value;
+            }
         }
     }
 
@@ -54,15 +81,43 @@ public class GeneratorBlock extends Block {
         return true;
     }
 
+    @Override
+    public int value() {
+        return 50;
+    }
+
+    @Override
+    public Rectangle showGUI(Tile tile) {
+        return ItemGUI.showGUI(tile, Items.generable);
+    }
+
+    @Override
+    public void drawGUI(Tile tile, Rectangle size) {
+        ItemGUI.drawGUI(tile, size, Items.generable, ((Data) tile.getBlockData()).item);
+    }
+
+    @Override
+    public boolean updateGUI(Tile tile, Rectangle size) {
+        Item item = ItemGUI.updateGUI(tile, size, Items.generable);
+
+        if (item != null) {
+            Data data = (Data) tile.getBlockData();
+
+            if (data.item == item) {
+                data.item = null;
+            } else {
+                data.item = item;
+            }
+
+            return true;
+        }
+        return false;
+    }
+
+
+
     private static class Data extends BlockData {
 
-        private static int count = 0;
-
-        private int i;
-
-        public Data() {
-            this.i = count;
-            count++;
-        }
+        private Item item;
     }
 }

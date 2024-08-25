@@ -7,10 +7,10 @@ public class Blocks {
     public static Block CONVEYOR;
     public static Block UNDERGROUND_CONVEYOR;
     public static Block ROUTER;
-
     public static Block MACHINE;
     public static Block WALL;
     public static Block GENERATOR;
+    public static Block CONSUMER;
 
     public static void load() {
         AIR = new AirBlock();
@@ -23,5 +23,6 @@ public class Blocks {
 
         WALL = new WallBlock();
         GENERATOR = new GeneratorBlock("generator");
+        CONSUMER = new ConsumerBlock();
     }
 }

@@ -278,6 +278,11 @@ public class ConveyorBlock extends Block implements IConveyorBlock {
         return true;
     }
 
+    @Override
+    public int value() {
+        return 10;
+    }
+
     public static class Data extends ConveyorData {
 
 

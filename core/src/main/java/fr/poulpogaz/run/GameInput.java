@@ -2,9 +2,14 @@ package fr.poulpogaz.run;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import fr.poulpogaz.run.factory.Tile;
-import fr.poulpogaz.run.factory.blocks.*;
+import fr.poulpogaz.run.factory.blocks.Block;
+import fr.poulpogaz.run.factory.blocks.Blocks;
+import fr.poulpogaz.run.factory.blocks.IGUIBlock;
+import fr.poulpogaz.run.factory.blocks.UndergroundConveyorBlock;
+import org.w3c.dom.css.Rect;
 
 import static fr.poulpogaz.run.Variables.*;
 
@@ -20,6 +25,10 @@ public class GameInput extends BasicInputProcessor {
     public boolean flipped = false;
 
     public Tile selectedUndergroundConveyor;
+
+    public Tile guiTile;
+    public IGUIBlock gui;
+    public Rectangle guiRectangle;
 
     public boolean pause = false;
     public int simulateTicks = 0;
@@ -38,28 +47,39 @@ public class GameInput extends BasicInputProcessor {
         moveCamera();
 
         if (factory.isInFactory(tileX, tileY) && isMousePressed(Input.Buttons.RIGHT)) {
+            if (guiTile == factory.getTile(tileX, tileY)) {
+                closeGUI();
+            }
             factory.setBlock(tileX, tileY, Blocks.AIR);
         }
 
-        if (selectedBlock != null) {
+        if (gui != null && guiRectangle.contains(world.x, world.y)) {
+            if (gui.updateGUI(guiTile, guiRectangle)) {
+                closeGUI();
+            }
+        } else if (selectedBlock != null) {
             if (factory.isInFactory(tileX, tileY) && isMousePressed(Input.Buttons.LEFT)) {
-                boolean placed = factory.setBlock(tileX, tileY, selectedBlock, selectedBlockDirection, flipped);
+                if (playerResources >= selectedBlock.value() || debug) {
+                    boolean placed = factory.setBlock(tileX, tileY, selectedBlock, selectedBlockDirection, flipped);
 
-                if (placed) {
-                    if (selectedBlock == Blocks.UNDERGROUND_CONVEYOR) {
-                        if (selectedUndergroundConveyor != null) {
-                            UndergroundConveyorBlock block = (UndergroundConveyorBlock) selectedUndergroundConveyor.getBlock();
+                    if (placed) {
+                        playerResources -= selectedBlock.value();
 
-                            if (block.link(selectedUndergroundConveyor, factory.getTile(tileX, tileY))) {
-                                selectedUndergroundConveyor = null;
+                        if (selectedBlock == Blocks.UNDERGROUND_CONVEYOR) {
+                            if (selectedUndergroundConveyor != null) {
+                                UndergroundConveyorBlock block = (UndergroundConveyorBlock) selectedUndergroundConveyor.getBlock();
+
+                                if (block.link(selectedUndergroundConveyor, factory.getTile(tileX, tileY))) {
+                                    selectedUndergroundConveyor = null;
+                                }
+                            } else {
+                                selectedUndergroundConveyor = factory.getTile(tileX, tileY);
                             }
-                        } else {
-                            selectedUndergroundConveyor = factory.getTile(tileX, tileY);
                         }
-                    }
 
-                    if (selectedBlock.canBeFlipped()) {
-                        flipped = !flipped;
+                        if (selectedBlock.canBeFlipped()) {
+                            flipped = !flipped;
+                        }
                     }
                 }
             }
@@ -88,7 +108,15 @@ public class GameInput extends BasicInputProcessor {
             if (factory.isInFactory(tileX, tileY) && isMouseJustPressed(Input.Buttons.LEFT)) {
                 Tile tile = factory.getTile(tileX, tileY);
 
-                if (tile.getBlock() == Blocks.UNDERGROUND_CONVEYOR) {
+                if (tile.getBlock() instanceof IGUIBlock) {
+                    IGUIBlock newGUI = (IGUIBlock) tile.getBlock();
+                    if (gui == null || newGUI != gui) {
+                        gui = newGUI;
+                        guiTile = tile;
+                        guiRectangle = gui.showGUI(guiTile);
+                    }
+
+                } else if (tile.getBlock() == Blocks.UNDERGROUND_CONVEYOR) {
                     if (selectedUndergroundConveyor != tile && selectedUndergroundConveyor != null) {
                         UndergroundConveyorBlock block = (UndergroundConveyorBlock) selectedUndergroundConveyor.getBlock();
 
@@ -111,6 +139,7 @@ public class GameInput extends BasicInputProcessor {
                     }
                 } else {
                     selectedUndergroundConveyor = null;
+                    closeGUI();
                 }
             }
         }
@@ -122,6 +151,12 @@ public class GameInput extends BasicInputProcessor {
         if (isKeyJustPressed(Input.Keys.LEFT)) {
             simulateTicks = 1;
         }
+    }
+
+    public void closeGUI() {
+        gui = null;
+        guiRectangle = null;
+        guiTile = null;
     }
 
     public void select(Block block) {
