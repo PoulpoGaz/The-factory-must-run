@@ -4,6 +4,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.utils.Array;
 import fr.poulpogaz.run.Content;
 import fr.poulpogaz.run.ContentType;
+import fr.poulpogaz.run.Utils;
 import fr.poulpogaz.run.factory.item.Item;
 
 public class Recipe extends Content {
@@ -15,6 +16,30 @@ public class Recipe extends Content {
 
     public Recipe(String name) {
         super(name);
+    }
+
+    public int indexOfInput(Item item) {
+        return Utils.indexOf(inputs, i -> i.item == item);
+    }
+
+    public int indexOfOutput(Item item) {
+        return Utils.indexOf(outputs, i -> i.item == item);
+    }
+
+    public int requiredCount(int index) {
+        return inputs[index].count;
+    }
+
+    public int outputCount(int index) {
+        return outputs[index].count;
+    }
+
+    public int inputCount() {
+        return inputs.length;
+    }
+
+    public int outputCount() {
+        return outputs.length;
     }
 
     @Override

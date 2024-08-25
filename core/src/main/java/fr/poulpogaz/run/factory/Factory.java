@@ -40,7 +40,7 @@ public class Factory {
         tick++;
 
         for (Tile tile : tiles) {
-            if (tile.getBlock().isUpdatable()) {
+            if (tile.getBlock().isUpdatable() && tile.isMultiBlockAnchor()) {
                 tile.getBlock().tick(tile.getBlockData());
             }
         }

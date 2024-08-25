@@ -59,7 +59,7 @@ public class Tile {
                 return true;
             }
             return false;
-        } else if (this.block == block) {
+        } else /*if (this.block == block) {
             // rotate
             if (data == null) {
                 return false;
@@ -79,7 +79,7 @@ public class Tile {
             }
 
             return true;
-        } else  {
+        } else*/  {
             // replace
             Block oldBlock = this.block;
             BlockData oldData = this.data;
@@ -116,7 +116,7 @@ public class Tile {
     }
 
     public BlockData getBlockData() {
-        return data;
+        return isMultiBlockAnchor() ? data : multiBlockAnchor().data;
     }
 
     public void setFloor(Floor floor) {

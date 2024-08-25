@@ -8,6 +8,7 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Pool;
 
 import java.awt.geom.Rectangle2D;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static fr.poulpogaz.run.Variables.*;
@@ -128,5 +129,15 @@ public class Utils {
         }
 
         return n;
+    }
+
+    public static <T> int indexOf(T[] array, Predicate<T> equals) {
+        for (int i = 0; i < array.length; i++) {
+            if (equals.test(array[i])) {
+                return i;
+            }
+        }
+
+        return -1;
     }
 }
