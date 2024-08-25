@@ -3,6 +3,7 @@ package fr.poulpogaz.run;
 import com.badlogic.gdx.utils.Array;
 import fr.poulpogaz.run.factory.blocks.Blocks;
 import fr.poulpogaz.run.factory.item.Items;
+import fr.poulpogaz.run.factory.recipes.Recipes;
 
 public class ContentManager {
 
@@ -18,6 +19,7 @@ public class ContentManager {
     public static void createContent() {
         Items.load();
         Blocks.load();
+        Recipes.load();
     }
 
     public static void loadContent() {

@@ -11,9 +11,12 @@ import static fr.poulpogaz.run.Variables.factory;
 
 public class Tile {
 
-    private Block block = Blocks.AIR;
-    private BlockData data = null;
-    private Floor floor = Floor.GROUND;
+    public Block block = Blocks.AIR;
+    public BlockData data = null;
+    public Floor floor = Floor.GROUND;
+
+    public int multiBlockOffsetX;
+    public int multiBlockOffsetY;
 
     public final int x;
     public final int y;
@@ -32,8 +35,16 @@ public class Tile {
         return factory.getTile(x + dx, y + dy);
     }
 
-    public boolean setBlock(Block block, Direction direction, boolean flipped) {
-        if (block == Blocks.AIR || block == null) {
+    public boolean setBlock(Block block, Direction direction, boolean flipped, int multiBlockOffsetX, int multiBlockOffsetY) {
+        if (multiBlockOffsetX != 0 || multiBlockOffsetY != 0) {
+            if (this.block == Blocks.AIR) {
+                this.block = block;
+                this.multiBlockOffsetX = multiBlockOffsetX;
+                this.multiBlockOffsetY = multiBlockOffsetY;
+            }
+
+            return false;
+        } else if (block == Blocks.AIR || block == null) {
             if (this.block != Blocks.AIR) {
                 // remove
                 this.block.onBlockDestroyed(this);
@@ -42,6 +53,8 @@ public class Tile {
                 }
                 data = null;
                 this.block = Blocks.AIR;
+                this.multiBlockOffsetX = 0;
+                this.multiBlockOffsetY = 0;
 
                 return true;
             }
@@ -60,7 +73,7 @@ public class Tile {
 
             block.onBlockRotated(this, direction, flipped);
             data.direction = direction;
-            
+
             if (flipData != null) {
                 flipData.setFlipped(flipped);
             }
@@ -88,6 +101,14 @@ public class Tile {
 
             return true;
         }
+    }
+
+    public Tile multiBlockAnchor() {
+        return factory.getTile(x - multiBlockOffsetX, y - multiBlockOffsetY);
+    }
+
+    public boolean isMultiBlockAnchor() {
+        return multiBlockOffsetX == 0 && multiBlockOffsetY == 0;
     }
 
     public Block getBlock() {

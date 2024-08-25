@@ -79,6 +79,10 @@ public abstract class Block extends Content {
         return false;
     }
 
+    public boolean isMultiBlock() {
+        return width() > 1 || height() > 1;
+    }
+
     @Override
     public final ContentType getContentType() {
         return ContentType.BLOCK;

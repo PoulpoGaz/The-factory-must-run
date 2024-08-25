@@ -65,6 +65,14 @@ public class GameScreen implements Screen {
             }
         });
 
+        Button machine = new Button(new Image(atlas.findRegion("machine")), skin);
+        machine.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                input.select(Blocks.MACHINE);
+            }
+        });
+
         Button wall = new Button(new Image(atlas.findRegion("wall")), skin);
         wall.addListener(new ChangeListener() {
             @Override
@@ -86,6 +94,7 @@ public class GameScreen implements Screen {
         rootTable.add(conveyor).padLeft(10).padRight(10);
         rootTable.add(router).padLeft(10).padRight(10);
         rootTable.add(undergroundConveyor).padLeft(10).padRight(10);
+        rootTable.add(machine).padLeft(10).padRight(10);
         rootTable.add(wall).padLeft(10).padRight(10);
         rootTable.add(generator).padLeft(10).padRight(10);
 
@@ -167,13 +176,19 @@ public class GameScreen implements Screen {
 
 
     private void drawFactory() {
+        for (Tile tile : factory.tiles) {
+            Floor floor = tile.getFloor();
+            TextureRegion region = floor.getRegion();
+            batch.draw(region, tile.drawX(), tile.drawY());
+        }
+
         for (int y = 0; y < factory.height; y++) {
             for (int x = 0; x < factory.width; x++) {
                 Tile tile = factory.getTile(x, y);
 
-                Floor floor = tile.getFloor();
-                TextureRegion region = floor.getRegion();
-                batch.draw(region, x * TILE_SIZE, y * TILE_SIZE);
+                if (tile.multiBlockOffsetX > 0 || tile.multiBlockOffsetY > 0) {
+                    continue;
+                }
 
                 Block block = tile.getBlock();
                 if (block != null) {

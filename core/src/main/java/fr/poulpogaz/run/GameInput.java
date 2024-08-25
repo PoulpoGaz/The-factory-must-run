@@ -42,7 +42,7 @@ public class GameInput extends BasicInputProcessor {
         }
 
         if (selectedBlock != null) {
-            if (factory.isInFactory(tileX, tileY) && isMouseJustPressed(Input.Buttons.LEFT)) {
+            if (factory.isInFactory(tileX, tileY) && isMousePressed(Input.Buttons.LEFT)) {
                 boolean placed = factory.setBlock(tileX, tileY, selectedBlock, selectedBlockDirection, flipped);
 
                 if (placed) {

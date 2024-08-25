@@ -31,7 +31,7 @@ public class ConveyorManager {
     public static ConveyorSection adjacentSection(BlockData data, RelativeDirection dir) {
         if (data != null) {
             Tile tile = data.adjacentRelative(dir);
-            if (tile.getBlock().isConveyor()) {
+            if (tile != null && tile.getBlock().isConveyor()) {
                 ConveyorData adj = (ConveyorData) tile.getBlockData();
                 if (adj != null) {
                     return adj.conveyorSection(dir.absolute(data.direction).opposite().relativeTo(adj.direction));

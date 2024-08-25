@@ -28,7 +28,7 @@ public class Factory {
                 tiles[i] = new Tile(x, y);
 
                 if (y == 0 || y == height - 1 || x == 0 || x == width - 1) {
-                    tiles[i].setBlock(Blocks.WALL, Direction.LEFT, false);
+                    tiles[i].setBlock(Blocks.WALL, Direction.LEFT, false, 0, 0);
                 }
 
                 i++;
@@ -39,9 +39,7 @@ public class Factory {
     public void tick() {
         tick++;
 
-        for (int i = 0; i < tiles.length; i++) {
-            Tile tile = tiles[i];
-
+        for (Tile tile : tiles) {
             if (tile.getBlock().isUpdatable()) {
                 tile.getBlock().tick(tile.getBlockData());
             }
@@ -55,14 +53,59 @@ public class Factory {
     }
 
     public boolean setBlock(int x, int y, Block selectedBlock, Direction direction, boolean flipped) {
+        if (x < 0 || y < 0 || x + selectedBlock.width() > width || y + selectedBlock.height() > height) {
+            return false;
+        }
+
         if (direction == null) {
             direction = Direction.LEFT;
         }
-        return getTile(x, y).setBlock(selectedBlock, direction, flipped);
+
+        if (selectedBlock.isMultiBlock()) {
+            Tile tile = getTile(x, y);
+            if (tile.isMultiBlockAnchor() && tile.block == selectedBlock) {
+                // rotate / flip
+                getTile(x, y).setBlock(selectedBlock,direction, flipped, 0, 0);
+            } else if (tile.block != selectedBlock) {
+                // check if same block in area
+                for (int offsetY = 0; offsetY < selectedBlock.height(); offsetY++) {
+                    for (int offsetX = 0; offsetX < selectedBlock.width(); offsetX++) {
+                        if (getBlock(x + offsetX, y + offsetY) == selectedBlock) {
+                            return false;
+                        }
+                    }
+                }
+
+                for (int offsetY = 0; offsetY < selectedBlock.height(); offsetY++) {
+                    for (int offsetX = 0; offsetX < selectedBlock.width(); offsetX++) {
+                        removeBlock(x + offsetX, y + offsetY);
+                        getTile(x + offsetX, y + offsetY).setBlock(selectedBlock, direction, flipped, offsetX, offsetY);
+                    }
+                }
+            }
+
+            return true;
+        } else {
+            Tile tile = getTile(x, y);
+            Block block = tile.getBlock();
+
+            if (block.isMultiBlock()) {
+                Tile anchor = tile.multiBlockAnchor();
+
+                for (int offsetY = 0; offsetY < block.height(); offsetY++) {
+                    for (int offsetX = 0; offsetX < block.width(); offsetX++) {
+                        Tile t = getTile(anchor.x + offsetX, anchor.y + offsetY);
+                        t.setBlock(Blocks.AIR, null, false, 0, 0);
+                    }
+                }
+            }
+
+            return tile.setBlock(selectedBlock, direction, flipped, 0, 0);
+        }
     }
 
     public void removeBlock(int x, int y) {
-        getTile(x, y).setBlock(Blocks.AIR, null, false);
+        setBlock(x, y, Blocks.AIR, null, false);
     }
 
     public Tile getTile(int x, int y) {

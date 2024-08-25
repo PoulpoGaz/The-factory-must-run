@@ -7,7 +7,7 @@ import fr.poulpogaz.run.factory.Tile;
 public class BlockData {
 
     // tile on which the block is.
-    // if multi block -> top left tile
+    // if multi block -> bot left tile
     public Tile tile;
 
     public Direction direction = Direction.LEFT;

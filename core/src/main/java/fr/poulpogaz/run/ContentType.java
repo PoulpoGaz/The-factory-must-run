@@ -3,7 +3,8 @@ package fr.poulpogaz.run;
 public enum ContentType {
 
     BLOCK,
-    ITEM;
+    ITEM,
+    RECIPE;
 
     public static ContentType[] values = values();
 }
