@@ -107,7 +107,7 @@ public class MachineBlock extends Block implements ItemConsumer, IGUIBlock {
 
     @Override
     public int value() {
-        return 50;
+        return 200;
     }
 
     @Override

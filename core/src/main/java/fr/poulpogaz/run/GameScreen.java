@@ -11,6 +11,7 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.ScreenUtils;
@@ -58,16 +59,21 @@ public class GameScreen implements Screen {
     private void createButton(Block block, String icon) {
         TextureRegion r = atlas.findRegion(icon);
 
-        Button button = new Button(new Image(new TextureRegionDrawable(r), Scaling.fit), skin, "toggle") {
+        Table table = new Table();
+        table.add(new Image(new TextureRegionDrawable(r), Scaling.fit)).padRight(5);
+        table.add(new Label(Integer.toString(block.value()), skin));
+
+        Button button = new Button(table, skin, "toggle") {
             @Override
             public float getPrefWidth() {
-                return (float) (TILE_SIZE * 1.25);
+                return TILE_SIZE * 2.5f;
             }
 
             @Override
             public float getPrefHeight() {
                 return (float) (TILE_SIZE * 1.25);
             }
+
         };
         button.addListener(createChangeLister(block));
 
@@ -103,11 +109,58 @@ public class GameScreen implements Screen {
 
         setupBatches(stage.getViewport().getCamera().combined, ID);
 
-        if (input.pause) {
-            font.draw(batch, "Paused", 0, Gdx.graphics.getHeight());
+        if (debug) {
+            if (input.pause) {
+                font.draw(batch, "Paused", 0, Gdx.graphics.getHeight());
+            }
+            font.draw(batch, "Debug", 0, Gdx.graphics.getHeight() - 20);
         }
 
-        Utils.drawStringCentered("Resources: " + playerResources, 0, Gdx.graphics.getHeight(), Gdx.graphics.getWidth());
+        if (playerResources < 0) {
+            font32.setColor(1, 0, 0, 1);
+        } else {
+            font32.setColor(1, 1, 1, 1);
+        }
+
+        if (!bankruptcyContinue) {
+            Utils.drawStringCentered(font32, "Resources: " + playerResources, 0, Gdx.graphics.getHeight(),
+                                     Gdx.graphics.getWidth());
+            if (playerResources < 0) {
+                int diff = (TIME_BEFORE_BANKRUPTCY - (factory.tick - bankruptcyTick)) / 60;
+
+                int min = diff / 60;
+                int sec = diff % 60;
+
+                if (min > 0) {
+                    Utils.drawStringCentered(font32, "Bankruptcy in : " + min + "m " + sec + "s", 0,
+                                             Gdx.graphics.getHeight() - 30, Gdx.graphics.getWidth());
+                } else {
+                    Utils.drawStringCentered(font32, "Bankruptcy in : " + min + "m", 0, Gdx.graphics.getHeight() - 30,
+                                             Gdx.graphics.getWidth());
+                }
+            }
+        }
+
+        if (hasReachedBankruptcy && !bankruptcyContinue) {
+            TextureRegion white = ItemGUI.white;
+
+            float color = batch.getPackedColor();
+            batch.setColor(0.5f, 0.5f, 0.5f, 0.5f);
+            batch.draw(white, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+            batch.setPackedColor(color);
+
+            Utils.drawStringCentered(font32, "Your factory goes bankrupt.\nHowever, you can swap to sandbox modes by pressing SPACE.", 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        } else if (input.pause && !debug) {
+            TextureRegion white = ItemGUI.white;
+
+            float color = batch.getPackedColor();
+            batch.setColor(0.5f, 0.5f, 0.5f, 0.5f);
+            batch.draw(white, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+            batch.setPackedColor(color);
+
+            Utils.drawStringCentered(font32, "Game paused.\nSPACE to resume.", 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        }
+
         batch.end();
 
         stage.draw();
@@ -122,10 +175,19 @@ public class GameScreen implements Screen {
         }
 
 
-        if (!input.pause || input.simulateTicks > 0) {
+        if (!input.pause && (!hasReachedBankruptcy || bankruptcyContinue) || input.simulateTicks > 0) {
             factory.tick();
 
             input.simulateTicks = Math.max(input.simulateTicks - 1, 0);
+
+            if (playerResources >= 0) {
+                bankruptcyTick = factory.tick;
+            }
+
+            if (!bankruptcyContinue && factory.tick - bankruptcyTick >= TIME_BEFORE_BANKRUPTCY) {
+                hasReachedBankruptcy = true;
+                input.pause = true;
+            }
         }
         stage.act(Math.min(delta, 1 / 60f));
         input.clean();

@@ -1,9 +1,11 @@
 package fr.poulpogaz.run;
 
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Pool;
 
 import java.util.function.Predicate;
@@ -15,20 +17,21 @@ public class Utils {
 
     public static final GlyphLayout layout = new GlyphLayout();
 
-    public static void drawStringCentered(String str, float x, float y, float width, float height) {
-        layout.setText(font, str);
+    public static void drawStringCentered(BitmapFont font, String str, float x, float y, float width, float height) {
+        layout.setText(font, str, font.getColor(), width, Align.center, true);
 
         font.draw(batch, str,
-                x + (width - layout.width) / 2,
-                y - (height - layout.height) / 2);
+                  x,
+                  y + (height + layout.height) / 2,
+                  width, Align.center, true);
     }
 
-    public static void drawStringCentered(String str, float x, float y, float width) {
+    public static void drawStringCentered(BitmapFont font, String str, float x, float y, float width) {
         layout.setText(font, str);
 
         font.draw(batch, str,
-                x + (width - layout.width) / 2,
-                y);
+                  x + (width - layout.width) / 2,
+                  y);
     }
 
     public static <T> Pool<T> newPool(Supplier<T> constructor) {

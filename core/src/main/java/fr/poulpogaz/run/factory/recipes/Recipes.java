@@ -80,6 +80,7 @@ public class Recipes {
             .input(Items.INDUCTOR, 3)
             .input(Items.CAPACITOR, 3)
             .input(Items.RESISTOR, 3)
+            .input(Items.TRANSISTOR, 3)
             .output(Items.ELECTRONIC_CIRCUIT, 1)
             .duration(240)
             .icon(atlas.findRegion("electronic_circuit")).build("electronic_circuit");

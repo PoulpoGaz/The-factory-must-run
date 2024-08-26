@@ -65,7 +65,7 @@ public class Factory {
             Tile tile = getTile(x, y);
             if (tile.isMultiBlockAnchor() && tile.block == selectedBlock) {
                 // rotate / flip
-                getTile(x, y).setBlock(selectedBlock,direction, flipped, 0, 0);
+                return getTile(x, y).setBlock(selectedBlock,direction, flipped, 0, 0);
             } else if (tile.block != selectedBlock) {
                 // check if same block in area
                 for (int offsetY = 0; offsetY < selectedBlock.height(); offsetY++) {

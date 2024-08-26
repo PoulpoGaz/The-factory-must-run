@@ -12,17 +12,22 @@ public class Variables {
     public static final int TILE_SIZE = 32;
     public static final int HALF_TILE_SIZE = TILE_SIZE / 2;
     public static final int DEFAULT_RESOURCES = 1000;
+    public static final int TIME_BEFORE_BANKRUPTCY = 60 * 60 * 5;
 
     public static final AssetManager assetManager = new AssetManager();
     public static ShapeRenderer shape;
     public static SpriteBatch batch;
     public static BitmapFont font;
+    public static BitmapFont font32;
     public static TextureAtlas atlas;
 
     public static GameInput input;
     public static Camera camera;
     public static Factory factory;
     public static int playerResources = DEFAULT_RESOURCES;
+    public static int bankruptcyTick;
+    public static boolean hasReachedBankruptcy = false;
+    public static boolean bankruptcyContinue = false;
 
-    public static boolean debug = true;
+    public static boolean debug = false;
 }

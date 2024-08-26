@@ -23,6 +23,7 @@ public class Main extends Game {
     public void create() {
         // load assets
         assetManager.load("textures/font.fnt", BitmapFont.class);
+        assetManager.load("textures/font_32.fnt", BitmapFont.class);
         assetManager.load("textures/map/map.atlas", TextureAtlas.class);
 
         assetManager.finishLoading();
@@ -32,6 +33,7 @@ public class Main extends Game {
         batch = new SpriteBatch();
 
         font = assetManager.get("textures/font.fnt");
+        font32 = assetManager.get("textures/font_32.fnt");
         atlas = assetManager.get("textures/map/map.atlas");
 
         // load content

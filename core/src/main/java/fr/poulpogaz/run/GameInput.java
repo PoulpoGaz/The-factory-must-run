@@ -44,113 +44,118 @@ public class GameInput extends BasicInputProcessor {
         tileX = (int) (world.x / TILE_SIZE);
         tileY = (int) (world.y / TILE_SIZE);
 
-        moveCamera();
+        if (!input.pause && (!hasReachedBankruptcy || bankruptcyContinue) || debug) {
+            moveCamera();
 
-        if (factory.isInFactory(tileX, tileY) && isMousePressed(Input.Buttons.RIGHT)) {
-            if (guiTile == factory.getTile(tileX, tileY)) {
-                closeGUI();
+            if (factory.isInFactory(tileX, tileY) && isMousePressed(Input.Buttons.RIGHT)) {
+                if (guiTile == factory.getTile(tileX, tileY)) {
+                    closeGUI();
+                }
+                factory.setBlock(tileX, tileY, Blocks.AIR);
             }
-            factory.setBlock(tileX, tileY, Blocks.AIR);
-        }
 
-        if (gui != null && guiRectangle.contains(world.x, world.y)) {
-            if (gui.updateGUI(guiTile, guiRectangle)) {
-                closeGUI();
-            }
-        } else if (selectedBlock != null) {
-            if (factory.isInFactory(tileX, tileY) && isMousePressed(Input.Buttons.LEFT)) {
-                if (playerResources >= selectedBlock.value() || debug) {
-                    Tile tile = factory.getTile(tileX, tileY).multiBlockAnchor();
+            if (gui != null && guiRectangle.contains(world.x, world.y)) {
+                if (gui.updateGUI(guiTile, guiRectangle)) {
+                    closeGUI();
+                }
+            } else if (selectedBlock != null) {
+                if (factory.isInFactory(tileX, tileY) && isMousePressed(Input.Buttons.LEFT)) {
+                    if (playerResources >= selectedBlock.value() || debug || bankruptcyContinue) {
+                        Tile tile = factory.getTile(tileX, tileY).multiBlockAnchor();
 
-                    boolean placed = factory.setBlock(tileX, tileY, selectedBlock, selectedBlockDirection, flipped);
+                        boolean placed = factory.setBlock(tileX, tileY, selectedBlock, selectedBlockDirection, flipped);
 
-                    if (placed) {
-                        if (tile == guiTile) {
-                            closeGUI();
-                        }
+                        if (placed) {
+                            if (tile == guiTile) {
+                                closeGUI();
+                            }
 
-                        playerResources -= selectedBlock.value();
+                            playerResources -= selectedBlock.value();
 
-                        if (selectedBlock == Blocks.UNDERGROUND_CONVEYOR) {
-                            if (selectedUndergroundConveyor != null) {
-                                UndergroundConveyorBlock block = (UndergroundConveyorBlock) selectedUndergroundConveyor.getBlock();
+                            if (selectedBlock == Blocks.UNDERGROUND_CONVEYOR) {
+                                if (selectedUndergroundConveyor != null) {
+                                    UndergroundConveyorBlock block = (UndergroundConveyorBlock) selectedUndergroundConveyor.getBlock();
 
-                                if (block.link(selectedUndergroundConveyor, factory.getTile(tileX, tileY))) {
-                                    selectedUndergroundConveyor = null;
+                                    if (block.link(selectedUndergroundConveyor, factory.getTile(tileX, tileY))) {
+                                        selectedUndergroundConveyor = null;
+                                    }
+                                } else {
+                                    selectedUndergroundConveyor = factory.getTile(tileX, tileY);
                                 }
-                            } else {
-                                selectedUndergroundConveyor = factory.getTile(tileX, tileY);
+                            }
+
+                            if (selectedBlock.canBeFlipped()) {
+                                flipped = !flipped;
                             }
                         }
-
-                        if (selectedBlock.canBeFlipped()) {
-                            flipped = !flipped;
-                        }
                     }
                 }
-            }
-            if (factory.isInFactory(tileX, tileY) && isMousePressed(Input.Buttons.RIGHT)) {
-                factory.removeBlock(tileX, tileY);
-            }
-
-            boolean shift = isKeyPressed(Input.Keys.SHIFT_LEFT);
-            boolean r = isKeyJustPressed(Input.Keys.R);
-
-            if (selectedBlock.canBeRotated() && !shift && r) {
-                selectedBlockDirection = selectedBlockDirection.rotateCW();
-            }
-            if (selectedBlock.canBeFlipped() && shift && r) {
-                flipped = !flipped;
-
-                if (selectedBlock.canBeRotated()) {
-                    selectedBlockDirection = selectedBlockDirection.opposite();
+                if (factory.isInFactory(tileX, tileY) && isMousePressed(Input.Buttons.RIGHT)) {
+                    factory.removeBlock(tileX, tileY);
                 }
-            }
 
-            if (isKeyJustPressed(Input.Keys.Q)) {
-                select(null);
-            }
-        } else {
-            if (factory.isInFactory(tileX, tileY) && isMouseJustPressed(Input.Buttons.LEFT)) {
-                Tile tile = factory.getTile(tileX, tileY);
+                boolean shift = isKeyPressed(Input.Keys.SHIFT_LEFT);
+                boolean r = isKeyJustPressed(Input.Keys.R);
 
-                if (tile.getBlock() instanceof IGUIBlock) {
-                    IGUIBlock newGUI = (IGUIBlock) tile.getBlock();
-                    if (gui == null || newGUI != gui) {
-                        gui = newGUI;
-                        guiTile = tile.multiBlockAnchor();
-                        guiRectangle = gui.showGUI(guiTile);
+                if (selectedBlock.canBeRotated() && !shift && r) {
+                    selectedBlockDirection = selectedBlockDirection.rotateCW();
+                }
+                if (selectedBlock.canBeFlipped() && shift && r) {
+                    flipped = !flipped;
+
+                    if (selectedBlock.canBeRotated()) {
+                        selectedBlockDirection = selectedBlockDirection.opposite();
                     }
+                }
 
-                } else if (tile.getBlock() == Blocks.UNDERGROUND_CONVEYOR) {
-                    if (selectedUndergroundConveyor != tile && selectedUndergroundConveyor != null) {
-                        UndergroundConveyorBlock block = (UndergroundConveyorBlock) selectedUndergroundConveyor.getBlock();
+                if (isKeyJustPressed(Input.Keys.Q)) {
+                    select(null);
+                }
+            } else {
+                if (factory.isInFactory(tileX, tileY) && isMouseJustPressed(Input.Buttons.LEFT)) {
+                    Tile tile = factory.getTile(tileX, tileY);
 
-                        Tile tile2 = factory.getTile(tileX, tileY);
-
-                        boolean actionDone;
-                        if (block.areLinked(selectedUndergroundConveyor, tile2)) {
-                            actionDone = block.unlink(selectedUndergroundConveyor);
-                        } else {
-                            actionDone = block.link(selectedUndergroundConveyor, factory.getTile(tileX, tileY));
+                    if (tile.getBlock() instanceof IGUIBlock) {
+                        IGUIBlock newGUI = (IGUIBlock) tile.getBlock();
+                        if (gui == null || newGUI != gui) {
+                            gui = newGUI;
+                            guiTile = tile.multiBlockAnchor();
+                            guiRectangle = gui.showGUI(guiTile);
                         }
 
-                        if (actionDone) {
-                            selectedUndergroundConveyor = null;
+                    } else if (tile.getBlock() == Blocks.UNDERGROUND_CONVEYOR) {
+                        if (selectedUndergroundConveyor != tile && selectedUndergroundConveyor != null) {
+                            UndergroundConveyorBlock block = (UndergroundConveyorBlock) selectedUndergroundConveyor.getBlock();
+
+                            Tile tile2 = factory.getTile(tileX, tileY);
+
+                            boolean actionDone;
+                            if (block.areLinked(selectedUndergroundConveyor, tile2)) {
+                                actionDone = block.unlink(selectedUndergroundConveyor);
+                            } else {
+                                actionDone = block.link(selectedUndergroundConveyor, factory.getTile(tileX, tileY));
+                            }
+
+                            if (actionDone) {
+                                selectedUndergroundConveyor = null;
+                            } else {
+                                selectedUndergroundConveyor = tile2;
+                            }
                         } else {
-                            selectedUndergroundConveyor = tile2;
+                            selectedUndergroundConveyor = tile;
                         }
                     } else {
-                        selectedUndergroundConveyor = tile;
+                        selectedUndergroundConveyor = null;
+                        closeGUI();
                     }
-                } else {
-                    selectedUndergroundConveyor = null;
-                    closeGUI();
                 }
             }
         }
 
         if (isKeyJustPressed(Input.Keys.SPACE)) {
+            if (hasReachedBankruptcy) {
+                bankruptcyContinue = true;
+            }
             pause = !pause;
         }
 
