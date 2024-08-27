@@ -1,36 +1,28 @@
-# Run
+# The factory must run
 
-A [libGDX](https://libgdx.com/) project generated with [gdx-liftoff](https://github.com/libgdx/gdx-liftoff).
+An unfinished factory game for [OLC CodeJam 2024](https://itch.io/jam/olc-codejam-2024).
 
-This project was generated with a template including simple application launchers and an `ApplicationListener` implementation that listens to user input.
+## Game description
 
-## Platforms
+Manage a factory in this factorio/mindustry inspired game !
 
-- `core`: Main module with the application logic shared by all platforms.
-- `lwjgl3`: Primary desktop platform using LWJGL3.
-- `html`: Web platform using GWT and WebGL. Supports only Java projects.
+Place conveyors, routers and underground conveyors to deliver items from generators to machines and then to consumers. Nevertheless, space is limited and building and producing cost resources. Will you be able to produce an electronic circuit ?
 
-## Gradle
 
-This project uses [Gradle](https://gradle.org/) to manage dependencies.
-The Gradle wrapper was included, so you can run Gradle tasks using `gradlew.bat` or `./gradlew` commands.
-Useful Gradle tasks and flags:
+### Game mechanics details:
 
-- `--continue`: when using this flag, errors will not stop the tasks from running.
-- `--daemon`: thanks to this flag, Gradle daemon will be used to run chosen tasks.
-- `--offline`: when using this flag, cached dependency archives will be used.
-- `--refresh-dependencies`: this flag forces validation of all dependencies. Useful for snapshot versions.
-- `build`: builds sources and archives of every project.
-- `cleanEclipse`: removes Eclipse project data.
-- `cleanIdea`: removes IntelliJ project data.
-- `clean`: removes `build` folders, which store compiled classes and built archives.
-- `eclipse`: generates Eclipse project data.
-- `html:dist`: compiles GWT sources. The compiled application can be found at `html/build/dist`: you can use any HTTP server to deploy it.
-- `html:superDev`: compiles GWT sources and runs the application in SuperDev mode. It will be available at [localhost:8080/html](http://localhost:8080/html). Use only during development.
-- `idea`: generates IntelliJ project data.
-- `lwjgl3:jar`: builds application's runnable jar, which can be found at `lwjgl3/build/libs`.
-- `lwjgl3:run`: starts the application.
-- `test`: runs unit tests (if any).
+A conveyor can take items from behind, left or right and output them in front of it. A router take items from behind and output them in front of it or on its right or left. A router can act as a filter and output only in front of him the filtered item. (click on a router to show filter menu). An underground conveyor outputs items to another underground conveyor in a range of 5 according to manhattan distance. You can link/unlink two underground conveyors by clicking on them.<br>
+Generators can produce items, select the item by clicking on it. Generators output directly to a conveyor. Machines take items from conveyors which go towards him. A recipe can be selected by opening the machine's sub menu (click on the machine). Machines output items to adjacent conveyors or directly to another machine/consumer. A consumer consume an item and increase your resources.
 
-Note that most tasks that are not specific to a single project can be run with `name:` prefix, where the `name` should be replaced with the ID of a specific project.
-For example, `core:clean` removes `build` folder only from the `core` project.
+### Interface details:
+
+In the bottom: blocks than can be placed: in order: conveyor, router, underground conveyor, generator, consumer, machine and wall. The cost of a block is the number on the left
+In the top: your resources. You cannot place blocks or produce items who cost more than that. You can see the cost of an item by hovering an item in the generator sub menu.
+
+### Controls:
+
+* LEFT CLICK: select blocks, place blocks, open sub menu for routers, machines and generators, and link/unlink underground conveyors.
+* Q: deselect
+* RIGTH CLICK: delete block
+* R: rotate selected block
+* SHIFT+R: swap underground conveyor
